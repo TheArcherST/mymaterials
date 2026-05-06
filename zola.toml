@@ -1,6 +1,6 @@
-base_url = "https://tomioka.ru"
-title = "thearcherst's blog"
-description = "Блог"
+base_url = "https://mymaterials.ru"
+title = "thearcherst's materials"
+description = "MyMaterials"
 
 theme = "apollo"
 
@@ -39,7 +39,7 @@ menu = [
 ]
 
 socials = [
-  { name = "github", url = "https://github.com/thearcherst/blog", icon = "github" },
+  { name = "github", url = "https://github.com/thearcherst/mymaterials", icon = "github" },
   { name = "telegram", url = "https://t.me/thearcherst", icon = "telegram" },
 ]
 
