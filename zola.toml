@@ -1,0 +1,51 @@
+base_url = "https://tomioka.ru"
+title = "thearcherst's blog"
+description = "Блог"
+
+theme = "apollo"
+
+build_search_index = true
+generate_feeds = true
+compile_sass = true
+minify_html = true
+
+taxonomies = [{ name = "tags" }]
+
+[search]
+include_title = true
+include_description = true
+include_path = true
+include_content = true
+index_format = "elasticlunr_json"
+
+[markdown.highlighting]
+style = "class"
+light_theme = "github-light"
+dark_theme = "github-dark"
+error_on_missing_language = false
+
+[extra]
+toc = true
+use_cdn = false
+theme = "toggle-auto" # light, dark, auto, toggle, toggle-auto
+fancy_code = true
+dynamic_note = true
+mathjax = true
+mathjax_dollar_inline_enable = true
+
+menu = [
+  { name = "/articles", url = "/articles", weight = 1 },
+  { name = "/tags", url = "/tags", weight = 2 },
+]
+
+socials = [
+  { name = "github", url = "https://github.com/thearcherst/blog", icon = "github" },
+  { name = "telegram", url = "https://t.me/thearcherst", icon = "telegram" },
+]
+
+stylesheets = []
+
+[extra.taxonomies]
+sort_by = "page_count"
+reverse = true
+
