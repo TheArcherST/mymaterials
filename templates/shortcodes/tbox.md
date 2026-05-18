@@ -8,7 +8,8 @@
 }
 
 .tbox-header {
-    font-size: 1.2em;
+    font-size: 1.2rem;
+    margin: 0.5em 0 1em 0;
 }
 
 </style>

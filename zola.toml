@@ -35,6 +35,7 @@ mathjax_dollar_inline_enable = true
 
 menu = [
   { name = "/articles", url = "/articles", weight = 1 },
+  { name = "/lessons", url = "/lessons", weight = 1 },
   { name = "/tags", url = "/tags", weight = 2 },
 ]
 
