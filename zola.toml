@@ -32,6 +32,8 @@ fancy_code = true
 dynamic_note = true
 mathjax = true
 mathjax_dollar_inline_enable = true
+repo_view = true
+repo_url = "https://github.com/TheArcherST/mymaterials"
 
 menu = [
   { name = "/articles", url = "/articles", weight = 1 },
