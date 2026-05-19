@@ -44,7 +44,7 @@ socials = [
   { name = "telegram", url = "https://t.me/thearcherst", icon = "telegram" },
 ]
 
-stylesheets = []
+stylesheets = ["cusom.css"]
 
 [extra.taxonomies]
 sort_by = "page_count"

@@ -27,7 +27,7 @@ GET /items HTTP/1.1
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
  
-[{"id": 0, "name": "Тёплая куртка"}, {"id": 1, "name": "Обычные носки"}, {"id": 2, "name": "Перчатки"}]
+[{"id":0,"name":"Тёплая куртка"},{"id":1,"name":"Обычные носки"},{"id":2,"name":"Перчатки"}]
 ```
 
 ### Эндпоинт для получения одного айтема по айди
@@ -44,7 +44,7 @@ GET /items/0 HTTP/1.1
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
  
-{"id": 0, "name": "Тёплая куртка"}
+{"id":0,"name":"Тёплая куртка"}
 ```
 
 ## Реализация без использования веб-фреймворка
