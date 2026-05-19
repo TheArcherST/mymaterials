@@ -7,13 +7,13 @@ tags = ["python", "fastapi"]
 
 Дизайн API.
 
-Request:
+Запрос:
 
 ```http
-GET /cards HTTP/1.1
+GET /items HTTP/1.1
 ```
 
-Response:
+Ответ:
 
 ```http
 HTTP/1.1 200 OK
@@ -21,13 +21,13 @@ Host: example.com
 Content-Type: application/json; charset=utf-8
 Content-Length: 50
  
-[{"id": 1,"name":"Шапка","image":"https://example.com/b.png"},{"id":2,"name":"Куртка","image":"https://example.com/a.png"}]
+[{"id": 1,"name":"Тёплая куртка","image":"https://example.com/b.png"},{"id":2,"name":"Куртка","image":"https://example.com/a.png"}]
 ```
 
-Request:
+Запрос:
 
 ```http
-GET /cards/1 HTTP/1.1
+GET /items/1 HTTP/1.1
 ```
 
 Response:
@@ -41,14 +41,14 @@ Content-Length: 20
 {"id": 1,"name":"Шапка","image":"https://example.com/b.png"}
 ```
 
-Реализация
+Реализация без использования веб-фреймворка
 
 ```python
 from waitress import serve
-
+ 
 import json
-
-
+ 
+ 
 ITEMS = [
     {
         "id": 1,
@@ -63,33 +63,33 @@ ITEMS = [
         "name": "Перчатки",
     },
 ]
-
-
+ 
+ 
 def app(environ, start_response):
     # Метод запроса: GET, POST, PUT, DELETE и т.д.
     method = environ["REQUEST_METHOD"]
-
+ 
     # Путь запроса: /items, /items/1 и т.д.
     path = environ["PATH_INFO"]
-
+ 
     # тут будут лежать данные, которые мы хотим вернуть в зависимости от запроса
     result_data = None
-
+ 
     # Получение списка
     if method == "GET" and path == "/items":
         result_data = ITEMS
-
+ 
     # Получение одного элемента
     elif method == "GET" and path.startswith("/items/"):
         without_prefix = path.removeprefix("/items/")
-
+ 
         try:
             item_id = int(without_prefix)
         except ValueError:
             # возвращаем HTTP-ответ с ошибкой: id должен быть числом
             start_response("400 Bad Request", [("Content-Type", "text/plain; charset=utf-8")])
             return ["Item id must be a number".encode("utf-8")]
-
+ 
         for item in ITEMS:
             if item_id == item["id"]:
                 result_data = item
@@ -98,7 +98,7 @@ def app(environ, start_response):
             # возвращаем HTTP-ответ с ошибкой: элемента с таким id у нас нет
             start_response("404 Not Found", [("Content-Type", "text/plain; charset=utf-8")])
             return ["Item not found".encode("utf-8")]
-
+ 
     # ... если никакой из вариантов не подошёл
     if result_data is None:
         # по желанию можно делать страницы с ошибками, чтобы пользователю было понятнее,
@@ -111,120 +111,118 @@ def app(environ, start_response):
         page = "Ничего не нашли! Попробуйте другой путь"
         page_bytes = page.encode("utf-8")
         return [page_bytes]
-
+ 
     # ... иначе формируем успешный ответ
-
+ 
     # начало ответа: версия протокола подставляется автоматически;
     # мы указываем статус, сообщение и заголовки
     headers = [
         ("Content-Type", "application/json; charset=utf-8")
     ]
     start_response("200 OK", headers)
-
+ 
     # формируем и отправляем тело ответа
     result_string = json.dumps(result_data)
     result_bytes = result_string.encode("utf-8")
     return [result_bytes]
-
-
+ 
+ 
 serve(app) 
 ```
 
-Обработка мокового запроса:
+Реализация с использованием FastAPI (поведение, формирующее из запроса ответ то же самое, что в примере выше)
 
 ```python
-# ------------------------------
-# Данные
-# ------------------------------
-ITEMS = [
-    {"id": 1, "name": "Шапка"},
-    {"id": 2, "name": "Куртка"},
-    {"id": 3, "name": "Перчатки"},
-]
-
-# ------------------------------
-# Мок start_response
-# ------------------------------
-start_response_calls = []
-
-def start_response(status, headers):
-    start_response_calls.append((status, headers))
-
-# ------------------------------
-# WSGI-обработчик
-# ------------------------------
-def app(environ, start_response):
-    method = environ["REQUEST_METHOD"]
-    path = environ["PATH_INFO"]
-    result_data = None
-
-    # Получение всех items
-    if method == "GET" and path == "/items":
-        result_data = ITEMS
-
-    # Получение одного item по id
-    elif method == "GET" and path.startswith("/items/"):
-        without_prefix = path.removeprefix("/items/")
-        try:
-            item_id = int(without_prefix)
-        except ValueError:
-            start_response("400 Bad Request", [("Content-Type", "text/plain; charset=utf-8")])
-            return [b"Item id must be a number"]
-
-        for item in ITEMS:
-            if item["id"] == item_id:
-                result_data = item
-                break
-        else:
-            start_response("404 Not Found", [("Content-Type", "text/plain; charset=utf-8")])
-            return [b"Item not found"]
-
-    if result_data is None:
-        start_response("404 Not Found", [("Content-Type", "text/plain; charset=utf-8")])
-        return [b"Not Found"]
-
-    start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
-    return [str(result_data).encode()]
-
-# ------------------------------
-# Мок запроса
-# ------------------------------
-mock_request = {
-    "REQUEST_METHOD": "GET",
-    "PATH_INFO": "/items/2"
-}
-
-# ------------------------------
-# Вызов WSGI обработчика с моком
-# ------------------------------
-response_body = app(mock_request, start_response)
-
-# ------------------------------
-# Вывод результата
-# ------------------------------
-print("Status & Headers:", start_response_calls)
-print("Body:", response_body[0].decode())
+from uvicorn import run
+from fastapi import FastAPI
+  
+ITEMS = ...
+ 
+ 
+app = FastAPI()
+ 
+ 
+@app.get("/items")
+def get_items():
+    return ITEMS
+ 
+ 
+@app.get("/items/{item_id}")
+def get_item_by_id(item_id: int):
+    pass
+ 
+ 
+run(app)
 ```
+
+Код с занятия
 
 
 ```python
 from uvicorn import run
 from fastapi import FastAPI
 
-ITEMS = ...
-
-
 app = FastAPI()
+
+ITEMS = [
+    {"id": 0, "name": "Тёплая куртка"},
+    {"id": 1, "name": "Тёплая куртка"},
+    {"id": 2, "name": "Обычные носки"},
+    {"id": 3, "name": "Перчатки", "verbose_name": "Резиновые перчатки"},
+    {"id": 4, "name": "Холодная куртка"},
+]
 
 
 @app.get("/items")
-def get_items():
+async def get_all_items():
     return ITEMS
 
 
 @app.get("/items/{item_id}")
-def get_item_by_id(item_id: int):
-    pass
+async def get_item_by_id(
+        item_id: int,
+        verbose_name: bool,
+):
+    for item in ITEMS:
+        if item_id == item["id"]:
+            if verbose_name and "verbose_name" in item:
+                return {"id": item["id"], "name": item["verbose_name"]}
+            return {"id": item["id"], "name": item["name"]}
+
+
+"""
+POST /items?name=Сапоги&verbose_name=Тёплые сапоги HTTP/1.1
+Content-Length: 100
+
+request_body
+"""
+
+
+def plus(a, b):
+    """
+    Функция складывает два числа
+    """
+
+
+# POST, PUT, PATCH
+
+@app.post("/items")
+async def create_new_item(
+        name: str,
+        verbose_name: str,
+):
+    """
+    Создаёт новый айтем
+    """
+
+    new_item = {
+        "id": len(ITEMS),
+        "name": name,
+        "verbose_name": verbose_name,
+    }
+
+    ITEMS.append(new_item)
+    return new_item
 
 
 run(app)
