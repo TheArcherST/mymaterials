@@ -1,11 +1,19 @@
 +++
-title = "Python, FastAPI, 1."
+title = "Python, FastAPI, 2."
 date = 2026-05-01
 [taxonomies]
 tags = ["python", "fastapi"]
 +++
 
-Дизайн API.
+## Полезные ресурсы (на русском)
+
+1. [Официальный ресурс по изучению FastAPI](https://fastapi.tiangolo.com/ru/learn/)
+2. [Хороший (но не самый простой) материал по HTTP](https://developer.mozilla.org/ru/docs/Web/HTTP/Guides/Overview).  На том же сайте ещё много смежных материалов.  Некоторые на русском, некоторые только на англ.
+
+
+## Пример HTTP API с которым работали:
+
+### Эндпоинт для получения всех айтемов
 
 Запрос:
 
@@ -19,10 +27,11 @@ GET /items HTTP/1.1
 HTTP/1.1 200 OK
 Host: example.com
 Content-Type: application/json; charset=utf-8
-Content-Length: 50
  
-[{"id": 1,"name":"Тёплая куртка","image":"https://example.com/b.png"},{"id":2,"name":"Куртка","image":"https://example.com/a.png"}]
+[{"id": 1, "name": "Тёплая куртка"}, {"id": 2, "name": "Обычные носки"}, {"id": 3, "name": "Перчатки"}]
 ```
+
+### Эндпоинт для получения одного айтема по айди
 
 Запрос:
 
@@ -30,18 +39,17 @@ Content-Length: 50
 GET /items/1 HTTP/1.1
 ```
 
-Response:
+Ответ:
 
 ```http
 HTTP/1.1 200 OK
 Host: example.com
 Content-Type: application/json; charset=utf-8
-Content-Length: 20
  
-{"id": 1,"name":"Шапка","image":"https://example.com/b.png"}
+{"id": 1, "name": "Тёплая куртка"}
 ```
 
-Реализация без использования веб-фреймворка
+## Реализация без использования веб-фреймворка
 
 ```python
 from waitress import serve
@@ -63,8 +71,8 @@ ITEMS = [
         "name": "Перчатки",
     },
 ]
- 
- 
+
+
 def app(environ, start_response):
     # Метод запроса: GET, POST, PUT, DELETE и т.д.
     method = environ["REQUEST_METHOD"]
@@ -75,68 +83,57 @@ def app(environ, start_response):
     # тут будут лежать данные, которые мы хотим вернуть в зависимости от запроса
     result_data = None
  
-    # Получение списка
+    # Получение всех айтемов
     if method == "GET" and path == "/items":
         result_data = ITEMS
  
-    # Получение одного элемента
+    # Получение одного по айди
     elif method == "GET" and path.startswith("/items/"):
         without_prefix = path.removeprefix("/items/")
  
         try:
             item_id = int(without_prefix)
         except ValueError:
-            # возвращаем HTTP-ответ с ошибкой: id должен быть числом
-            start_response("400 Bad Request", [("Content-Type", "text/plain; charset=utf-8")])
-            return ["Item id must be a number".encode("utf-8")]
- 
+            # FastAPI в похожей ситуации вернёт ошибку в JSON
+            headers = [("Content-Type", "application/json; charset=utf-8")]
+            start_response("422 Unprocessable Entity", headers)
+            return ['{"detail":"item_id must be an integer"}'.encode("utf-8")]
+
         for item in ITEMS:
             if item_id == item["id"]:
                 result_data = item
                 break
         else:  # если цикл закончился без break: всё обошли и ничего не нашли
-            # возвращаем HTTP-ответ с ошибкой: элемента с таким id у нас нет
-            start_response("404 Not Found", [("Content-Type", "text/plain; charset=utf-8")])
-            return ["Item not found".encode("utf-8")]
+            headers = [("Content-Type", "application/json; charset=utf-8")]
+            start_response("404 Not Found", headers)
+            return ['{"detail":"Item not found"}'.encode("utf-8")]
  
     # ... если никакой из вариантов не подошёл
     if result_data is None:
-        # по желанию можно делать страницы с ошибками, чтобы пользователю было понятнее,
-        # что произошло без знаний HTTP
-        headers = [
-            # этот HTTP-заголовок в ответе нужен, чтобы браузер правильно декодировал русский текст из тела ответа
-            ("Content-Type", "text/html; charset=utf-8")
-        ]
+        headers = [("Content-Type", "application/json; charset=utf-8")]
         start_response("404 Not Found", headers)
-        page = "Ничего не нашли! Попробуйте другой путь"
-        page_bytes = page.encode("utf-8")
-        return [page_bytes]
+        return ['{"detail":"Not found"}'.encode("utf-8")]
  
     # ... иначе формируем успешный ответ
- 
-    # начало ответа: версия протокола подставляется автоматически;
-    # мы указываем статус, сообщение и заголовки
-    headers = [
-        ("Content-Type", "application/json; charset=utf-8")
-    ]
+    headers = [("Content-Type", "application/json; charset=utf-8")]
     start_response("200 OK", headers)
- 
-    # формируем и отправляем тело ответа
-    result_string = json.dumps(result_data)
-    result_bytes = result_string.encode("utf-8")
-    return [result_bytes]
+    return [json.dumps(result_data, ensure_ascii=False).encode("utf-8")]
  
  
 serve(app) 
 ```
 
-Реализация с использованием FastAPI (поведение, формирующее из запроса ответ то же самое, что в примере выше)
+## Реализация с использованием FastAPI (поведение, формирующее из HTTP запроса HTTP ответ то же самое, что в примере выше)
 
 ```python
 from uvicorn import run
-from fastapi import FastAPI
-  
-ITEMS = ...
+from fastapi import FastAPI, HTTPException
+
+ITEMS = [
+    {"id": 1, "name": "Тёплая куртка"},
+    {"id": 2, "name": "Обычные носки"},
+    {"id": 3, "name": "Перчатки"},
+]
  
  
 app = FastAPI()
@@ -146,30 +143,33 @@ app = FastAPI()
 def get_items():
     return ITEMS
  
- 
+
 @app.get("/items/{item_id}")
 def get_item_by_id(item_id: int):
-    pass
+    for item in ITEMS:
+        if item["id"] == item_id:
+            return item
+
+    # забыл сказать про это.  так в fastapi формируют HTTP ответ с ошибкой.  на след. занятии разберём.
+    raise HTTPException(status_code=404, detail="Item not found")
  
  
 run(app)
 ```
 
-Код с занятия
+## Код с занятия
 
 
 ```python
 from uvicorn import run
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 app = FastAPI()
 
 ITEMS = [
-    {"id": 0, "name": "Тёплая куртка"},
     {"id": 1, "name": "Тёплая куртка"},
     {"id": 2, "name": "Обычные носки"},
     {"id": 3, "name": "Перчатки", "verbose_name": "Резиновые перчатки"},
-    {"id": 4, "name": "Холодная куртка"},
 ]
 
 
@@ -181,7 +181,7 @@ async def get_all_items():
 @app.get("/items/{item_id}")
 async def get_item_by_id(
         item_id: int,
-        verbose_name: bool,
+        verbose_name: bool = False,
 ):
     for item in ITEMS:
         if item_id == item["id"]:
@@ -189,12 +189,11 @@ async def get_item_by_id(
                 return {"id": item["id"], "name": item["verbose_name"]}
             return {"id": item["id"], "name": item["name"]}
 
+    raise HTTPException(status_code=404, detail="Item not found")
+
 
 """
 POST /items?name=Сапоги&verbose_name=Тёплые сапоги HTTP/1.1
-Content-Length: 100
-
-request_body
 """
 
 
@@ -204,12 +203,10 @@ def plus(a, b):
     """
 
 
-# POST, PUT, PATCH
-
 @app.post("/items")
 async def create_new_item(
         name: str,
-        verbose_name: str,
+        verbose_name: str | None = None,
 ):
     """
     Создаёт новый айтем
@@ -218,8 +215,10 @@ async def create_new_item(
     new_item = {
         "id": len(ITEMS),
         "name": name,
-        "verbose_name": verbose_name,
     }
+
+    if verbose_name is not None:
+        new_item["verbose_name"] = verbose_name
 
     ITEMS.append(new_item)
     return new_item
@@ -227,4 +226,3 @@ async def create_new_item(
 
 run(app)
 ```
-
