@@ -25,10 +25,9 @@ GET /items HTTP/1.1
 
 ```http
 HTTP/1.1 200 OK
-Host: example.com
 Content-Type: application/json; charset=utf-8
  
-[{"id": 1, "name": "Тёплая куртка"}, {"id": 2, "name": "Обычные носки"}, {"id": 3, "name": "Перчатки"}]
+[{"id": 0, "name": "Тёплая куртка"}, {"id": 1, "name": "Обычные носки"}, {"id": 2, "name": "Перчатки"}]
 ```
 
 ### Эндпоинт для получения одного айтема по айди
@@ -36,17 +35,16 @@ Content-Type: application/json; charset=utf-8
 Запрос:
 
 ```http
-GET /items/1 HTTP/1.1
+GET /items/0 HTTP/1.1
 ```
 
 Ответ:
 
 ```http
 HTTP/1.1 200 OK
-Host: example.com
 Content-Type: application/json; charset=utf-8
  
-{"id": 1, "name": "Тёплая куртка"}
+{"id": 0, "name": "Тёплая куртка"}
 ```
 
 ## Реализация без использования веб-фреймворка
@@ -59,15 +57,15 @@ import json
  
 ITEMS = [
     {
-        "id": 1,
+        "id": 0,
         "name": "Тёплая куртка",
     },
     {
-        "id": 2,
+        "id": 1,
         "name": "Обычные носки",
     },
     {
-        "id": 3,
+        "id": 2,
         "name": "Перчатки",
     },
 ]
@@ -94,7 +92,7 @@ def app(environ, start_response):
         try:
             item_id = int(without_prefix)
         except ValueError:
-            # FastAPI в похожей ситуации вернёт ошибку в JSON
+            # FastAPI в похожей ситуации вернёт более длинный текст ошибки, но логика работы такая же
             headers = [("Content-Type", "application/json; charset=utf-8")]
             start_response("422 Unprocessable Entity", headers)
             return ['{"detail":"item_id must be an integer"}'.encode("utf-8")]
@@ -108,7 +106,7 @@ def app(environ, start_response):
             start_response("404 Not Found", headers)
             return ['{"detail":"Item not found"}'.encode("utf-8")]
  
-    # ... если никакой из вариантов не подошёл
+    # ... если никакой из маршрутов не подошёл
     if result_data is None:
         headers = [("Content-Type", "application/json; charset=utf-8")]
         start_response("404 Not Found", headers)
@@ -130,9 +128,9 @@ from uvicorn import run
 from fastapi import FastAPI, HTTPException
 
 ITEMS = [
-    {"id": 1, "name": "Тёплая куртка"},
-    {"id": 2, "name": "Обычные носки"},
-    {"id": 3, "name": "Перчатки"},
+    {"id": 0, "name": "Тёплая куртка"},
+    {"id": 1, "name": "Обычные носки"},
+    {"id": 2, "name": "Перчатки"},
 ]
  
  
@@ -167,9 +165,9 @@ from fastapi import FastAPI, HTTPException
 app = FastAPI()
 
 ITEMS = [
-    {"id": 1, "name": "Тёплая куртка"},
-    {"id": 2, "name": "Обычные носки"},
-    {"id": 3, "name": "Перчатки", "verbose_name": "Резиновые перчатки"},
+    {"id": 0, "name": "Тёплая куртка"},
+    {"id": 1, "name": "Обычные носки"},
+    {"id": 2, "name": "Перчатки", "verbose_name": "Резиновые перчатки"},
 ]
 
 
@@ -181,7 +179,7 @@ async def get_all_items():
 @app.get("/items/{item_id}")
 async def get_item_by_id(
         item_id: int,
-        verbose_name: bool = False,
+        verbose_name: bool,
 ):
     for item in ITEMS:
         if item_id == item["id"]:
@@ -189,24 +187,14 @@ async def get_item_by_id(
                 return {"id": item["id"], "name": item["verbose_name"]}
             return {"id": item["id"], "name": item["name"]}
 
+    # забыл сказать про это.  так в fastapi формируют HTTP ответ с ошибкой.  на след. занятии разберём.
     raise HTTPException(status_code=404, detail="Item not found")
-
-
-"""
-POST /items?name=Сапоги&verbose_name=Тёплые сапоги HTTP/1.1
-"""
-
-
-def plus(a, b):
-    """
-    Функция складывает два числа
-    """
 
 
 @app.post("/items")
 async def create_new_item(
         name: str,
-        verbose_name: str | None = None,
+        verbose_name: str,
 ):
     """
     Создаёт новый айтем
@@ -215,14 +203,12 @@ async def create_new_item(
     new_item = {
         "id": len(ITEMS),
         "name": name,
+        "verbose_name": verbose_name,
     }
-
-    if verbose_name is not None:
-        new_item["verbose_name"] = verbose_name
-
     ITEMS.append(new_item)
     return new_item
 
 
 run(app)
 ```
+
