@@ -7,7 +7,7 @@ tags = ["python", "fastapi"]
 
 ## Полезные ресурсы (на русском)
 
-1. Курсы по Python на Stepik: [первый](https://stepik.org/course/58852) и [второй](https://stepik.org/course/68343/promo).  Сам я не проходил, но слышал, что там хорошо даётся база.
+1. Курсы по Python на Stepik: [первый](https://stepik.org/course/58852/promo) и [второй](https://stepik.org/course/68343/promo).  Сам я не проходил, но слышал, что там хорошо даётся база.
 
 
 ## Код с занятия
