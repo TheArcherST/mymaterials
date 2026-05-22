@@ -15,7 +15,7 @@ tags = ["python", "fastapi"]
 
 ```python
 from uvicorn import run
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi import FastAPI, HTTPException
 
 
@@ -25,12 +25,14 @@ app = FastAPI()
 CHATS: dict[int, dict] = dict()
 
 # Пример данных:
-# CHATS = {0: {"text": "Hello", "sender_name": "Mihail"}}
+# CHATS = {0: [{"text": "Hello", "sender_name": "Mihail"}]}
 
 
 @app.post("/chats")
 async def create_chat():
-    pass
+    new_chat_id = len(CHATS)
+    CHATS[new_chat_id] = []
+    return {"id": new_chat_id, "messages": []}
 
 
 class Message(BaseModel):
@@ -52,8 +54,9 @@ async def send_message_into_chat(
             status_code=404,
             detail="Chat not found.  Please create chat before using it.",
         )
-
-    CHATS[chat_id].append(message)
+    
+    # преобразуем экземпляр класса Message в обычный словарь
+    CHATS[chat_id].append({"text": message.text, "sender_name": message.sender_name})
 
     return message
 
@@ -68,10 +71,20 @@ async def get_chat_messages(
             detail="Chat not found",
         )
 
-    return CHATS[chat_id]
-
+    result = []
+    for i in CHATS[chat_id]:
+        # преобразуем словари в экземпляры класса Message через валидацию
+        message = Message.model_validate(i)
+        result.append(message)
+    return result
 
 
 run(app)
 ```
+
+{% tbox(id="note-1", header="Примечание") %}
+
+Можно было бы хранить в глобальной переменной CHATS сразу экземпляры класса Message. Тогда не надо было бы приводить Message к словарю, а потом обратно.  Однако нам понадобиться делать подобные конвертации когда мы начём использовать базы данных: там нельзя будет сохранить целый экземпляр класса Pydantic модели.
+
+{% end %}
 
