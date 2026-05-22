@@ -1,6 +1,6 @@
 +++
 title = "Python, FastAPI, 2."
-date = 2026-05-01
+date = 2026-05-10
 [taxonomies]
 tags = ["python", "fastapi"]
 +++
