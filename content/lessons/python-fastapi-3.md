@@ -45,9 +45,8 @@ async def send_message_into_chat(
     chat_id: int,
     message: Message,
     # обратите внимание, что это fastapi достаёт Message из тела запроса (request body), 
-    #  не из query параметров, как это было раньше.  это изменение поведения FastAPI обусловлено
-    #  именно тем, что использована структура данных объявленная через Pydantic. и это связано 
-    #  именно с тем, что мы указываем Pydantic модель
+    #  не из query параметров, как это было раньше.  это изменение поведения FastAPI связано 
+    #  именно с тем, что мы указываем Pydantic модель, а не простой тип
 ):
     if chat_id not in CHATS:
         raise HTTPException(
