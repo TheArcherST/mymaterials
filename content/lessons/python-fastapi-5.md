@@ -5,6 +5,11 @@ date = 2026-05-28
 tags = ["python", "fastapi"]
 +++
 
+## Полезные материалы (на русском)
+
+1. Официальная документация React, [статья про Эффекты (useEffect)](https://ru.react.dev/learn/synchronizing-with-effects)
+
+
 ## Код с занятия
 
 ```jsx
