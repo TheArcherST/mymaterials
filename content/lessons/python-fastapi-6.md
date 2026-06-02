@@ -48,8 +48,7 @@ async def create_user(payload: CreateUser):
     insert into users (name) values ($1)
     """, payload.name)
 
-    # Оставляем max(id), как в коде с занятия.
-    # В реальном коде лучше использовать insert ... returning id.
+    # лучше так не делать, поскольку между вставкой и созданием может быть создан ещё один пользователь, и у нас айди будет больше чем надо.  если что потом поясню почему так
     data = await conn.fetch("""
     select max(id) as id from users
     """)
