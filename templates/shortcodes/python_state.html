@@ -1,0 +1,2111 @@
+{% set python_state_id = id | default(value="") %}
+{% set python_state_title = title | default(value="Python state") %}
+{% set python_state_body = body | default(value="") %}
+
+<style>
+.python-state-shortcode {
+    position: relative;
+    border: 1px solid white;
+    border-radius: 2px;
+    overflow: hidden;
+    padding: 1em;
+    margin: 2em 0;
+}
+
+.python-state-shortcode__header {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.python-state-shortcode__fullscreen-button {
+    border: 1px solid white;
+    border-radius: 2px;
+    background: transparent;
+    color: inherit;
+    padding: 0.3em 0.55em;
+    font: inherit;
+    font-size: 0.78rem;
+    line-height: 1;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.python-state-shortcode__fullscreen-button:hover,
+.python-state-shortcode__fullscreen-button:focus-visible {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.python-state-shortcode__viewport {
+    overflow-x: auto;
+}
+
+.python-state-shortcode__stage {
+    position: relative;
+    min-width: 560px;
+    min-height: 240px;
+    overflow: hidden;
+}
+
+.python-state-shortcode__arrows {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+.python-state-shortcode__nodes {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+}
+
+.python-state-shortcode__box {
+    position: absolute;
+    box-sizing: border-box;
+    width: max-content;
+    min-width: 4.5rem;
+    max-width: 18rem;
+    border: 1px solid white;
+    border-radius: 2px;
+    background: var(--bg, transparent);
+    padding: 0.55em 0.7em;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+.python-state-shortcode__box:active {
+    cursor: grabbing;
+}
+
+.python-state-shortcode__box--dragging {
+    z-index: 3;
+}
+
+.python-state-shortcode__frame-title {
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 0.45em;
+    white-space: nowrap;
+}
+
+.python-state-shortcode__object-type {
+    line-height: 1.2;
+    margin-bottom: 0.45em;
+    white-space: nowrap;
+}
+
+.python-state-shortcode__bindings,
+.python-state-shortcode__object-content {
+    display: grid;
+    gap: 0.3em;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.python-state-shortcode__collection {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 0;
+    margin: 0;
+    padding: 0.15em 0 0.25em 0;
+    list-style: none;
+}
+
+.python-state-shortcode__reference {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    padding-right: 1.05em;
+    min-height: 1.35em;
+    line-height: 1.25;
+}
+
+.python-state-shortcode__reference-label,
+.python-state-shortcode__literal,
+.python-state-shortcode__object-line {
+    overflow-wrap: anywhere;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 0.9rem;
+}
+
+.python-state-shortcode__reference-label {
+    display: block;
+    white-space: nowrap;
+}
+
+.python-state-shortcode__reference-port {
+    position: absolute;
+    top: 50%;
+    right: 0.2em;
+    width: 0.48em;
+    height: 0.48em;
+    transform: translateY(-50%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.python-state-shortcode__reference[data-python-state-reference-side="left"] {
+    padding-right: 0;
+    padding-left: 1.05em;
+}
+
+.python-state-shortcode__reference[data-python-state-reference-side="left"] .python-state-shortcode__reference-port {
+    right: auto;
+    left: 0.2em;
+}
+
+.python-state-shortcode__reference--collection-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.15em;
+    height: 2.15em;
+    min-height: 0;
+    padding: 0;
+    border: 1px solid white;
+    box-sizing: border-box;
+}
+
+.python-state-shortcode__reference--collection-item + .python-state-shortcode__reference--collection-item {
+    border-left: 0;
+}
+
+.python-state-shortcode__reference--collection-item .python-state-shortcode__reference-label {
+    display: none;
+}
+
+.python-state-shortcode__reference--collection-item .python-state-shortcode__reference-port,
+.python-state-shortcode__reference--collection-item[data-python-state-reference-side="left"] .python-state-shortcode__reference-port {
+    top: 50%;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.python-state-shortcode__literal {
+    line-height: 1.35;
+}
+
+.python-state-shortcode__object--missing {
+    border-style: dashed;
+}
+
+.python-state-shortcode__edge {
+    pointer-events: visibleStroke;
+    color: #60a5fa;
+}
+
+.python-state-shortcode__edge-hit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 14;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: stroke;
+}
+
+.python-state-shortcode__edge-halo {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 140ms ease;
+}
+
+.python-state-shortcode__edge-line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 140ms ease;
+}
+
+.python-state-shortcode__edge-port-halo {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0);
+    stroke-width: 5;
+    transition: stroke 140ms ease;
+}
+
+.python-state-shortcode__edge-arrowhead-halo {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0);
+    stroke-width: 3;
+    stroke-linejoin: round;
+    transition: stroke 140ms ease;
+}
+
+.python-state-shortcode__edge-arrowhead {
+    fill: currentColor;
+    transition: fill 140ms ease;
+}
+
+.python-state-shortcode__edge-port {
+    fill: currentColor;
+    stroke: currentColor;
+    stroke-width: 1;
+    transition: fill 140ms ease, stroke 140ms ease, r 140ms ease;
+}
+
+.python-state-shortcode__edge:hover,
+.python-state-shortcode__edge:focus-visible,
+.python-state-shortcode__edge--active {
+    color: #93c5fd;
+    outline: none;
+}
+
+.python-state-shortcode__edge:hover .python-state-shortcode__edge-halo,
+.python-state-shortcode__edge:focus-visible .python-state-shortcode__edge-halo,
+.python-state-shortcode__edge--active .python-state-shortcode__edge-halo,
+.python-state-shortcode__edge:hover .python-state-shortcode__edge-port-halo,
+.python-state-shortcode__edge:focus-visible .python-state-shortcode__edge-port-halo,
+.python-state-shortcode__edge--active .python-state-shortcode__edge-port-halo {
+    stroke: rgba(255, 255, 255, 0.92);
+}
+
+.python-state-shortcode__edge:hover .python-state-shortcode__edge-arrowhead-halo,
+.python-state-shortcode__edge:focus-visible .python-state-shortcode__edge-arrowhead-halo,
+.python-state-shortcode__edge--active .python-state-shortcode__edge-arrowhead-halo {
+    stroke: rgba(255, 255, 255, 0.92);
+}
+
+.python-state-shortcode__error {
+    border: 1px solid white;
+    border-radius: 2px;
+    padding: 0.75em 0.9em;
+    max-width: 42rem;
+    line-height: 1.35;
+}
+
+.python-state-shortcode__error-title {
+    margin-bottom: 0.45em;
+    font-weight: 600;
+}
+
+.python-state-shortcode__error-detail {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 0.9rem;
+}
+
+.python-state-shortcode--fullscreen {
+    position: fixed;
+    top: var(--python-state-fullpage-top, 0);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 100vw;
+    height: calc(100vh - var(--python-state-fullpage-top, 0px));
+    height: calc(100dvh - var(--python-state-fullpage-top, 0px));
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: var(--python-state-fullpage-bg, transparent);
+    overflow: hidden;
+}
+
+.python-state-shortcode--fullscreen .python-state-shortcode__header {
+    margin: 0;
+}
+
+.python-state-shortcode--fullscreen .python-state-shortcode__viewport {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.python-state-shortcode--fullscreen .python-state-shortcode__stage {
+    min-height: 100%;
+}
+</style>
+
+<div{% if python_state_id %} id="{{ python_state_id }}"{% endif %} class="python-state-shortcode" data-python-state-shortcode>
+    <div class="python-state-shortcode__header">
+        <button class="python-state-shortcode__fullscreen-button" type="button" data-python-state-fullscreen-button aria-pressed="false">Full page</button>
+    </div>
+
+    <div class="python-state-shortcode__viewport">
+        <div class="python-state-shortcode__stage" data-python-state-stage aria-label="{{ python_state_title | striptags }}">
+            <svg class="python-state-shortcode__arrows" data-python-state-arrows aria-hidden="true"></svg>
+            <div class="python-state-shortcode__nodes" data-python-state-nodes></div>
+        </div>
+    </div>
+
+    <script type="text/plain" class="python-state-shortcode__data" data-python-state-data>
+{{ python_state_body | safe }}
+    </script>
+
+    <script>
+    (function () {
+        const currentScript = document.currentScript;
+        const root = currentScript.closest("[data-python-state-shortcode]");
+        const viewport = root.querySelector(".python-state-shortcode__viewport");
+        const stage = root.querySelector("[data-python-state-stage]");
+        const nodes = root.querySelector("[data-python-state-nodes]");
+        const arrowsSvg = root.querySelector("[data-python-state-arrows]");
+        const dataNode = root.querySelector("[data-python-state-data]");
+        const fullscreenButton = root.querySelector("[data-python-state-fullscreen-button]");
+        let savedDocumentOverflow = "";
+        let savedBodyOverflow = "";
+
+        const LAYOUT = {
+            minWidth: 560,
+            minHeight: 240,
+            outerGap: 18,
+            boxGap: 14,
+            arrowGap: 7,
+            cornerGap: 10,
+            alternativePathClearance: 18
+        };
+
+        function stableId(value, fallback) {
+            const raw = String(value || fallback || "item").trim().toLowerCase();
+            const slug = raw.replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
+            return slug || String(fallback || "item");
+        }
+
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        function parseState() {
+            const raw = dataNode.textContent.trim();
+
+            if (!raw) {
+                return {
+                    error: "python_state shortcode expects a JSON or YAML body."
+                };
+            }
+
+            try {
+                const parsed = raw[0] === "{" || raw[0] === "["
+                    ? JSON.parse(raw)
+                    : parseYamlSubset(raw);
+
+                return {
+                    state: validateState(parsed)
+                };
+            } catch (error) {
+                return {
+                    error: "Invalid python_state shortcode data:\n" + error.message
+                };
+            }
+        }
+
+        function dataError(path, message) {
+            throw new Error(path + ": " + message);
+        }
+
+        function isPlainObject(value) {
+            return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+        }
+
+        function assertPlainObject(value, path) {
+            if (!isPlainObject(value)) {
+                dataError(path, "expected an object");
+            }
+        }
+
+        function assertArray(value, path) {
+            if (!Array.isArray(value)) {
+                dataError(path, "expected an array");
+            }
+        }
+
+        function assertAllowedKeys(value, path, allowedKeys) {
+            const allowed = new Set(allowedKeys);
+
+            Object.keys(value).forEach(function (key) {
+                if (!allowed.has(key)) {
+                    dataError(path + "." + key, "unknown field");
+                }
+            });
+        }
+
+        function assertId(value, path) {
+            if (typeof value !== "string" || !/^[A-Za-z_][A-Za-z0-9_-]*$/.test(value)) {
+                dataError(path, "expected an object id like items or value_1");
+            }
+        }
+
+        function assertString(value, path) {
+            if (typeof value !== "string" || !value.trim()) {
+                dataError(path, "expected a non-empty string");
+            }
+        }
+
+        function parseYamlSubset(raw) {
+            const lines = raw.replace(/\r\n?/g, "\n").split("\n");
+            const tokens = [];
+
+            lines.forEach(function (line, index) {
+                if (!line.trim() || /^\s*#/.test(line)) {
+                    return;
+                }
+
+                if (/^\s*\t/.test(line)) {
+                    dataError("line " + (index + 1), "tabs are not allowed for indentation");
+                }
+
+                const indent = line.match(/^ */)[0].length;
+
+                if (indent % 2 !== 0) {
+                    dataError("line " + (index + 1), "indentation must use multiples of two spaces");
+                }
+
+                tokens.push({
+                    indent: indent,
+                    text: line.slice(indent),
+                    line: index + 1
+                });
+            });
+
+            if (!tokens.length) {
+                dataError("YAML", "expected data");
+            }
+
+            const parsed = parseYamlBlock(tokens, 0, tokens[0].indent);
+
+            if (parsed.index !== tokens.length) {
+                dataError("line " + tokens[parsed.index].line, "unexpected content");
+            }
+
+            return parsed.value;
+        }
+
+        function parseYamlBlock(tokens, index, indent) {
+            if (index >= tokens.length) {
+                dataError("YAML", "expected block");
+            }
+
+            if (tokens[index].indent !== indent) {
+                dataError("line " + tokens[index].line, "unexpected indentation");
+            }
+
+            if (tokens[index].text.startsWith("-")) {
+                return parseYamlSequence(tokens, index, indent);
+            }
+
+            return parseYamlMap(tokens, index, indent);
+        }
+
+        function parseYamlMap(tokens, index, indent) {
+            const value = {};
+
+            while (index < tokens.length && tokens[index].indent === indent && !tokens[index].text.startsWith("-")) {
+                const token = tokens[index];
+                const match = token.text.match(/^([A-Za-z_][A-Za-z0-9_-]*):(.*)$/);
+
+                if (!match) {
+                    dataError("line " + token.line, "expected key: value");
+                }
+
+                const key = match[1];
+                const scalar = match[2].trim();
+
+                if (Object.prototype.hasOwnProperty.call(value, key)) {
+                    dataError("line " + token.line, "duplicate key " + key);
+                }
+
+                index += 1;
+
+                if (scalar) {
+                    value[key] = parseYamlScalar(scalar, token.line);
+                } else {
+                    if (index >= tokens.length || tokens[index].indent <= indent) {
+                        dataError("line " + token.line, "expected nested value for " + key);
+                    }
+
+                    const child = parseYamlBlock(tokens, index, tokens[index].indent);
+                    value[key] = child.value;
+                    index = child.index;
+                }
+            }
+
+            return { value: value, index: index };
+        }
+
+        function parseYamlSequence(tokens, index, indent) {
+            const value = [];
+
+            while (index < tokens.length && tokens[index].indent === indent && tokens[index].text.startsWith("-")) {
+                const token = tokens[index];
+                const rest = token.text.slice(1).trim();
+
+                index += 1;
+
+                if (!rest) {
+                    if (index >= tokens.length || tokens[index].indent <= indent) {
+                        dataError("line " + token.line, "expected nested sequence item");
+                    }
+
+                    const child = parseYamlBlock(tokens, index, tokens[index].indent);
+                    value.push(child.value);
+                    index = child.index;
+                    continue;
+                }
+
+                const pair = rest.match(/^([A-Za-z_][A-Za-z0-9_-]*):(.*)$/);
+
+                if (pair) {
+                    const item = {};
+                    item[pair[1]] = parseYamlScalar(pair[2].trim(), token.line);
+
+                    while (index < tokens.length && tokens[index].indent === indent + 2 && !tokens[index].text.startsWith("-")) {
+                        const propertyToken = tokens[index];
+                        const property = propertyToken.text.match(/^([A-Za-z_][A-Za-z0-9_-]*):(.*)$/);
+
+                        if (!property) {
+                            dataError("line " + propertyToken.line, "expected key: value");
+                        }
+
+                        if (Object.prototype.hasOwnProperty.call(item, property[1])) {
+                            dataError("line " + propertyToken.line, "duplicate key " + property[1]);
+                        }
+
+                        const propertyValue = property[2].trim();
+                        index += 1;
+
+                        if (propertyValue) {
+                            item[property[1]] = parseYamlScalar(propertyValue, propertyToken.line);
+                        } else {
+                            if (index >= tokens.length || tokens[index].indent <= propertyToken.indent) {
+                                dataError("line " + propertyToken.line, "expected nested value for " + property[1]);
+                            }
+
+                            const child = parseYamlBlock(tokens, index, tokens[index].indent);
+                            item[property[1]] = child.value;
+                            index = child.index;
+                        }
+                    }
+
+                    value.push(item);
+                    continue;
+                }
+
+                value.push(parseYamlScalar(rest, token.line));
+            }
+
+            return { value: value, index: index };
+        }
+
+        function parseYamlScalar(value, line) {
+            if (!value) {
+                dataError("line " + line, "expected scalar value");
+            }
+
+            if (value[0] === "\"" || value[0] === "'") {
+                return parseQuotedYamlScalar(value, line);
+            }
+
+            if (value === "true") {
+                return true;
+            }
+
+            if (value === "false") {
+                return false;
+            }
+
+            if (value === "null" || value === "None") {
+                return null;
+            }
+
+            if (value === "[]") {
+                return [];
+            }
+
+            if (/^-?(0|[1-9][0-9]*)(\.[0-9]+)?$/.test(value)) {
+                return Number(value);
+            }
+
+            if (/[\[\]{}]/.test(value)) {
+                dataError("line " + line, "inline arrays and objects are not supported; use indented blocks");
+            }
+
+            return value;
+        }
+
+        function parseQuotedYamlScalar(value, line) {
+            const quote = value[0];
+
+            if (value[value.length - 1] !== quote) {
+                dataError("line " + line, "unterminated quoted string");
+            }
+
+            if (quote === "\"") {
+                try {
+                    return JSON.parse(value);
+                } catch (error) {
+                    dataError("line " + line, "invalid quoted string");
+                }
+            }
+
+            return value.slice(1, -1).replace(/''/g, "'");
+        }
+
+        function formatPythonLiteral(value, type) {
+            if (type === "str") {
+                return JSON.stringify(value === undefined ? "" : String(value));
+            }
+
+            if (type === "bool") {
+                return value ? "True" : "False";
+            }
+
+            if (type === "NoneType" || value === null) {
+                return "None";
+            }
+
+            if (value !== undefined) {
+                return String(value);
+            }
+
+            return "";
+        }
+
+        function normalizeDetails(value, path) {
+            if (Array.isArray(value)) {
+                return value.map(function (line, index) {
+                    if (typeof line !== "string") {
+                        dataError(path + "[" + index + "]", "expected a string");
+                    }
+
+                    return line;
+                });
+            }
+
+            if (value && typeof value === "object") {
+                return Object.keys(value).map(function (key) {
+                    return key + ": " + value[key];
+                });
+            }
+
+            if (value !== undefined && value !== null && value !== "") {
+                return [String(value)];
+            }
+
+            return [];
+        }
+
+        function validateEntries(value, path) {
+            if (Array.isArray(value)) {
+                return value.map(function (item, index) {
+                    const itemPath = path + "[" + index + "]";
+
+                    assertPlainObject(item, itemPath);
+                    assertString(item.id, itemPath + ".id");
+                    assertId(item.id, itemPath + ".id");
+
+                    return {
+                        id: item.id,
+                        value: item,
+                        path: itemPath
+                    };
+                });
+            }
+
+            assertPlainObject(value, path);
+
+            return Object.keys(value).map(function (id) {
+                assertId(id, path + "." + id);
+                assertPlainObject(value[id], path + "." + id);
+
+                return {
+                    id: id,
+                    value: value[id],
+                    path: path + "." + id
+                };
+            });
+        }
+
+        function validateReference(reference, path, label) {
+            assertPlainObject(reference, path);
+            assertAllowedKeys(reference, path, ["object"]);
+            assertString(reference.object, path + ".object");
+            assertId(reference.object, path + ".object");
+
+            return {
+                id: stableId(label, "reference"),
+                label: String(label),
+                target: reference.object,
+                note: ""
+            };
+        }
+
+        function validateBinding(binding, path, index) {
+            assertPlainObject(binding, path);
+            assertAllowedKeys(binding, path, ["name", "object"]);
+            assertString(binding.name, path + ".name");
+
+            return validateReference({ object: binding.object }, path, binding.name || index);
+        }
+
+        function validateFrame(entry) {
+            const frame = entry.value;
+
+            assertAllowedKeys(frame, entry.path, ["id", "name", "bindings"]);
+
+            if (frame.id !== undefined && frame.id !== entry.id) {
+                dataError(entry.path + ".id", "must match key " + entry.id);
+            }
+
+            if (frame.name !== undefined) {
+                assertString(frame.name, entry.path + ".name");
+            }
+
+            assertArray(frame.bindings, entry.path + ".bindings");
+
+            const bindingNames = new Set();
+
+            return {
+                id: entry.id,
+                name: frame.name || entry.id,
+                bindings: frame.bindings.map(function (binding, index) {
+                    if (isPlainObject(binding) && bindingNames.has(binding.name)) {
+                        dataError(entry.path + ".bindings[" + index + "].name", "duplicate binding name " + binding.name);
+                    }
+
+                    if (isPlainObject(binding)) {
+                        bindingNames.add(binding.name);
+                    }
+
+                    return validateBinding(binding, entry.path + ".bindings[" + index + "]", index);
+                })
+            };
+        }
+
+        function validateObjectValue(type, value, path) {
+            if (type === "int") {
+                if (!Number.isInteger(value)) {
+                    dataError(path, "expected an integer for type int");
+                }
+
+                return;
+            }
+
+            if (type === "float") {
+                if (typeof value !== "number") {
+                    dataError(path, "expected a number for type float");
+                }
+
+                return;
+            }
+
+            if (type === "bool") {
+                if (typeof value !== "boolean") {
+                    dataError(path, "expected true or false for type bool");
+                }
+
+                return;
+            }
+
+            if (type === "str") {
+                if (typeof value !== "string") {
+                    dataError(path, "expected a string for type str");
+                }
+
+                return;
+            }
+
+            if (type === "function") {
+                if (typeof value !== "string") {
+                    dataError(path, "expected a string description for type function");
+                }
+
+                return;
+            }
+
+            if (type === "NoneType") {
+                if (value !== null) {
+                    dataError(path, "expected null for type NoneType");
+                }
+            }
+        }
+
+        function validateObject(entry) {
+            const object = entry.value;
+            const type = object.type || object.kind;
+            let collectionItems = [];
+            const supportedTypes = new Set(["int", "float", "bool", "NoneType", "str", "list", "function", "object"]);
+
+            assertAllowedKeys(object, entry.path, ["id", "type", "kind", "value", "details"]);
+
+            if (object.id !== undefined && object.id !== entry.id) {
+                dataError(entry.path + ".id", "must match key " + entry.id);
+            }
+
+            assertString(type, entry.path + ".type");
+
+            if (!supportedTypes.has(type)) {
+                dataError(entry.path + ".type", "unsupported type " + type);
+            }
+
+            if (object.type !== undefined && object.kind !== undefined) {
+                dataError(entry.path + ".kind", "use either type or kind, not both");
+            }
+
+            if (type === "list") {
+                assertArray(object.value, entry.path + ".value");
+                collectionItems = object.value.map(function (reference, index) {
+                    return validateReference(reference, entry.path + ".value[" + index + "]", index);
+                });
+            } else {
+                if (object.value === undefined) {
+                    dataError(entry.path + ".value", "expected a value");
+                }
+
+                validateObjectValue(type, object.value, entry.path + ".value");
+            }
+
+            return {
+                id: entry.id,
+                type: type,
+                value: object.value,
+                details: normalizeDetails(object.details, entry.path + ".details"),
+                collectionItems: collectionItems,
+                missing: false
+            };
+        }
+
+        function validateState(rawState) {
+            assertPlainObject(rawState, "root");
+            assertAllowedKeys(rawState, "root", ["frames", "objects"]);
+
+            if (rawState.frames === undefined) {
+                dataError("root.frames", "expected frames");
+            }
+
+            if (rawState.objects === undefined) {
+                dataError("root.objects", "expected objects");
+            }
+
+            const frameEntries = validateEntries(rawState.frames, "frames");
+            const objectEntries = validateEntries(rawState.objects, "objects");
+            const seenFrameIds = new Set();
+            const seenIds = new Set();
+            const frames = frameEntries.map(function (entry) {
+                if (seenFrameIds.has(entry.id)) {
+                    dataError(entry.path, "duplicate frame id " + entry.id);
+                }
+
+                seenFrameIds.add(entry.id);
+                return validateFrame(entry);
+            });
+            const objects = objectEntries.map(function (entry) {
+                if (seenIds.has(entry.id)) {
+                    dataError(entry.path, "duplicate object id " + entry.id);
+                }
+
+                seenIds.add(entry.id);
+                return validateObject(entry);
+            });
+
+            frames.forEach(function (frame) {
+                frame.bindings.forEach(function (binding) {
+                    if (!seenIds.has(binding.target)) {
+                        dataError("frames." + frame.id + ".bindings." + binding.label, "unknown object " + binding.target);
+                    }
+                });
+            });
+
+            objects.forEach(function (object) {
+                object.collectionItems.forEach(function (item) {
+                    if (!seenIds.has(item.target)) {
+                        dataError("objects." + object.id + ".value[" + item.label + "]", "unknown object " + item.target);
+                    }
+                });
+            });
+
+            return { frames: frames, objects: objects };
+        }
+
+        function textElement(tagName, className, text) {
+            const element = document.createElement(tagName);
+            element.className = className;
+            element.textContent = text;
+            return element;
+        }
+
+        function renderError(message) {
+            const errorBox = document.createElement("div");
+            errorBox.className = "python-state-shortcode__error";
+            errorBox.appendChild(textElement("div", "python-state-shortcode__error-title", "Python state data error"));
+            errorBox.appendChild(textElement("pre", "python-state-shortcode__error-detail", message));
+            nodes.appendChild(errorBox);
+
+            fullscreenButton.disabled = true;
+            stage.style.height = LAYOUT.minHeight + "px";
+        }
+
+        function renderReference(reference, options) {
+            const row = document.createElement("li");
+            const isCollectionItem = options && options.collectionItem;
+
+            row.className = "python-state-shortcode__reference"
+                + (isCollectionItem ? " python-state-shortcode__reference--collection-item" : "");
+            row.dataset.pythonStateTarget = reference.target;
+
+            const label = textElement("span", "python-state-shortcode__reference-label", reference.label);
+            row.appendChild(label);
+
+            const port = document.createElement("span");
+            port.className = "python-state-shortcode__reference-port";
+            row.appendChild(port);
+
+            return row;
+        }
+
+        function renderFrame(frame) {
+            const box = document.createElement("section");
+            box.className = "python-state-shortcode__box python-state-shortcode__frame";
+            box.dataset.pythonStateNodeId = frame.id;
+
+            box.appendChild(textElement("div", "python-state-shortcode__frame-title", frame.name));
+
+            const list = document.createElement("ul");
+            list.className = "python-state-shortcode__bindings";
+
+            frame.bindings.forEach(function (binding) {
+                list.appendChild(renderReference(binding));
+            });
+
+            box.appendChild(list);
+            return box;
+        }
+
+        function renderObjectContent(object, box) {
+            const typeLine = textElement("div", "python-state-shortcode__object-type", "type: " + object.type);
+            box.appendChild(typeLine);
+
+            const content = document.createElement("div");
+            content.className = "python-state-shortcode__object-content";
+
+            if (object.collectionItems.length) {
+                const collection = document.createElement("ul");
+                collection.className = "python-state-shortcode__collection";
+
+                object.collectionItems.forEach(function (item) {
+                    collection.appendChild(renderReference(item, { collectionItem: true }));
+                });
+
+                content.appendChild(collection);
+            } else if (object.type === "function") {
+                content.appendChild(textElement("div", "python-state-shortcode__literal", object.value));
+            } else if (object.type === "int" || object.type === "float" || object.type === "bool" || object.type === "NoneType" || object.type === "str") {
+                content.appendChild(textElement("div", "python-state-shortcode__literal", formatPythonLiteral(object.value, object.type)));
+            } else if (object.details.length) {
+                object.details.forEach(function (line) {
+                    content.appendChild(textElement("div", "python-state-shortcode__object-line", line));
+                });
+            } else if (object.value !== undefined) {
+                content.appendChild(textElement("div", "python-state-shortcode__literal", formatPythonLiteral(object.value, object.type)));
+            }
+
+            if (content.childNodes.length) {
+                box.appendChild(content);
+            }
+        }
+
+        function renderObject(object) {
+            const box = document.createElement("section");
+            const missingClass = object.missing ? " python-state-shortcode__object--missing" : "";
+            box.className = "python-state-shortcode__box python-state-shortcode__object" + missingClass;
+            box.dataset.pythonStateNodeId = object.id;
+            renderObjectContent(object, box);
+            return box;
+        }
+
+        function rectInStage(element) {
+            const stageRect = stage.getBoundingClientRect();
+            const rect = element.getBoundingClientRect();
+
+            return {
+                left: rect.left - stageRect.left,
+                top: rect.top - stageRect.top,
+                right: rect.right - stageRect.left,
+                bottom: rect.bottom - stageRect.top,
+                width: rect.width,
+                height: rect.height,
+                centerX: rect.left - stageRect.left + rect.width / 2,
+                centerY: rect.top - stageRect.top + rect.height / 2
+            };
+        }
+
+        function getStageWidth() {
+            const viewportWidth = viewport.clientWidth;
+            return Math.max(viewportWidth, LAYOUT.minWidth);
+        }
+
+        function updateStageWidth(width) {
+            stage.style.width = Math.max(getStageWidth(), width || 0) + "px";
+        }
+
+        function resetStageWidthToViewport() {
+            stage.style.width = getStageWidth() + "px";
+        }
+
+        function setNodePosition(element, left, top) {
+            element.style.left = left + "px";
+            element.style.top = top + "px";
+        }
+
+        function captureNodeViewportPositions(nodeElements) {
+            const positions = new Map();
+
+            nodeElements.forEach(function (element) {
+                const rect = element.getBoundingClientRect();
+                positions.set(element, {
+                    left: rect.left,
+                    top: rect.top
+                });
+            });
+
+            return positions;
+        }
+
+        function applyNodeViewportPositions(positions) {
+            const stageRect = stage.getBoundingClientRect();
+
+            positions.forEach(function (position, element) {
+                setNodePosition(
+                    element,
+                    position.left - stageRect.left,
+                    position.top - stageRect.top
+                );
+            });
+        }
+
+        function clampNodePosition(element) {
+            const left = parseFloat(element.style.left) || 0;
+            const top = parseFloat(element.style.top) || 0;
+            const maxX = Math.max(0, stage.clientWidth - element.offsetWidth);
+            const maxY = Math.max(0, stage.clientHeight - element.offsetHeight);
+
+            setNodePosition(
+                element,
+                clamp(left, 0, maxX),
+                clamp(top, 0, maxY)
+            );
+        }
+
+        function fitNodeIntoCompactStage(element) {
+            const left = parseFloat(element.style.left) || 0;
+            const top = parseFloat(element.style.top) || 0;
+            const maxX = Math.max(0, stage.clientWidth - element.offsetWidth);
+
+            setNodePosition(
+                element,
+                clamp(left, 0, maxX),
+                Math.max(0, top)
+            );
+        }
+
+        function computeObjectLevels(state) {
+            const levels = new Map();
+            const objectsById = new Map();
+            const referencesByObject = new Map();
+
+            state.objects.forEach(function (object) {
+                objectsById.set(object.id, object);
+                referencesByObject.set(object.id, object.collectionItems.map(function (reference) {
+                    return reference.target;
+                }));
+            });
+
+            function reaches(startId, targetId, visited) {
+                if (startId === targetId) {
+                    return true;
+                }
+
+                if (visited.has(startId)) {
+                    return false;
+                }
+
+                visited.add(startId);
+
+                return (referencesByObject.get(startId) || []).some(function (nextId) {
+                    return reaches(nextId, targetId, visited);
+                });
+            }
+
+            state.frames.forEach(function (frame) {
+                frame.bindings.forEach(function (binding) {
+                    if (objectsById.has(binding.target) && !levels.has(binding.target)) {
+                        levels.set(binding.target, 1);
+                    }
+                });
+            });
+
+            state.objects.forEach(function (object) {
+                if (!levels.has(object.id)) {
+                    levels.set(object.id, 1);
+                }
+            });
+
+            for (let pass = 0; pass < state.objects.length; pass += 1) {
+                let changed = false;
+
+                state.objects.forEach(function (object) {
+                    const sourceLevel = levels.get(object.id) || 1;
+
+                    object.collectionItems.forEach(function (reference) {
+                        if (reference.target === object.id || reaches(reference.target, object.id, new Set())) {
+                            return;
+                        }
+
+                        const targetLevel = levels.get(reference.target) || 1;
+                        const requiredLevel = sourceLevel + 1;
+
+                        if (targetLevel < requiredLevel) {
+                            levels.set(reference.target, requiredLevel);
+                            changed = true;
+                        }
+                    });
+                });
+
+                if (!changed) {
+                    break;
+                }
+            }
+
+            return levels;
+        }
+
+        function getObjectOriginalOrder(state) {
+            const order = new Map();
+
+            state.objects.forEach(function (object, index) {
+                order.set(object.id, index);
+            });
+
+            return order;
+        }
+
+        function addReferenceScore(stats, target, candidateIds, score) {
+            if (!candidateIds.has(target)) {
+                return;
+            }
+
+            if (!stats.has(target)) {
+                stats.set(target, {
+                    count: 0,
+                    sum: 0
+                });
+            }
+
+            const targetStats = stats.get(target);
+            targetStats.count += 1;
+            targetStats.sum += score;
+        }
+
+        function getIncomingReferenceStats(state, objectLevels, objectColumnOrder, level, candidates) {
+            const candidateIds = new Set(candidates.map(function (object) {
+                return object.id;
+            }));
+            const stats = new Map();
+
+            if (level === 1) {
+                state.frames.forEach(function (frame, frameIndex) {
+                    const referenceCount = Math.max(1, frame.bindings.length + 1);
+
+                    frame.bindings.forEach(function (binding, bindingIndex) {
+                        addReferenceScore(
+                            stats,
+                            binding.target,
+                            candidateIds,
+                            frameIndex + (bindingIndex + 1) / referenceCount
+                        );
+                    });
+                });
+            }
+
+            state.objects.forEach(function (object) {
+                const sourceLevel = objectLevels.get(object.id) || 1;
+                const sourceOrder = objectColumnOrder.get(object.id);
+
+                if (sourceLevel >= level || sourceOrder === undefined) {
+                    return;
+                }
+
+                const referenceCount = Math.max(1, object.collectionItems.length + 1);
+
+                object.collectionItems.forEach(function (reference, referenceIndex) {
+                    addReferenceScore(
+                        stats,
+                        reference.target,
+                        candidateIds,
+                        sourceOrder + (referenceIndex + 1) / referenceCount
+                    );
+                });
+            });
+
+            return stats;
+        }
+
+        function buildOrderedObjectColumns(state, objectElements, objectLevels) {
+            const originalOrder = getObjectOriginalOrder(state);
+            const objectColumnOrder = new Map();
+            const objectsByLevel = new Map();
+            const columns = [];
+            let maxLevel = 0;
+
+            state.objects.forEach(function (object) {
+                if (!objectElements.has(object.id)) {
+                    return;
+                }
+
+                const level = objectLevels.get(object.id) || 1;
+                maxLevel = Math.max(maxLevel, level);
+
+                if (!objectsByLevel.has(level)) {
+                    objectsByLevel.set(level, []);
+                }
+
+                objectsByLevel.get(level).push(object);
+            });
+
+            for (let level = 1; level <= maxLevel; level += 1) {
+                const objects = objectsByLevel.get(level) || [];
+                const incomingStats = getIncomingReferenceStats(
+                    state,
+                    objectLevels,
+                    objectColumnOrder,
+                    level,
+                    objects
+                );
+
+                objects.sort(function (left, right) {
+                    const leftStats = incomingStats.get(left.id);
+                    const rightStats = incomingStats.get(right.id);
+                    const leftScore = leftStats ? leftStats.sum / leftStats.count : Number.POSITIVE_INFINITY;
+                    const rightScore = rightStats ? rightStats.sum / rightStats.count : Number.POSITIVE_INFINITY;
+
+                    return leftScore - rightScore
+                        || (originalOrder.get(left.id) || 0) - (originalOrder.get(right.id) || 0);
+                });
+
+                objects.forEach(function (object, index) {
+                    objectColumnOrder.set(object.id, index);
+                });
+
+                if (objects.length) {
+                    columns.push(objects.map(function (object) {
+                        return objectElements.get(object.id);
+                    }));
+                }
+            }
+
+            return columns;
+        }
+
+        function buildObjectReferenceMap(state) {
+            const referencesByObject = new Map();
+
+            state.objects.forEach(function (object) {
+                referencesByObject.set(object.id, object.collectionItems.map(function (reference) {
+                    return reference.target;
+                }));
+            });
+
+            return referencesByObject;
+        }
+
+        function objectReachesTarget(referencesByObject, startId, targetId, visited) {
+            if (startId === targetId) {
+                return true;
+            }
+
+            if (visited.has(startId)) {
+                return false;
+            }
+
+            visited.add(startId);
+
+            return (referencesByObject.get(startId) || []).some(function (nextId) {
+                return objectReachesTarget(referencesByObject, nextId, targetId, visited);
+            });
+        }
+
+        function collectReachableObjects(startIds, referencesByObject) {
+            const reachable = new Set();
+            const queue = startIds.slice();
+
+            while (queue.length) {
+                const id = queue.shift();
+
+                if (reachable.has(id)) {
+                    continue;
+                }
+
+                reachable.add(id);
+
+                (referencesByObject.get(id) || []).forEach(function (targetId) {
+                    queue.push(targetId);
+                });
+            }
+
+            return reachable;
+        }
+
+        function inflateRect(rect, amount) {
+            return {
+                left: rect.left - amount,
+                top: rect.top - amount,
+                right: rect.right + amount,
+                bottom: rect.bottom + amount,
+                width: rect.width + amount * 2,
+                height: rect.height + amount * 2,
+                centerX: rect.centerX,
+                centerY: rect.centerY
+            };
+        }
+
+        function segmentIntersectsRect(start, end, rect) {
+            const steps = 24;
+
+            for (let step = 1; step < steps; step += 1) {
+                const ratio = step / steps;
+                const x = start.x + (end.x - start.x) * ratio;
+                const y = start.y + (end.y - start.y) * ratio;
+
+                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function rectCenter(rect) {
+            return {
+                x: rect.centerX,
+                y: rect.centerY
+            };
+        }
+
+        function getTargetTopBelowObstacle(sourcePoint, targetPoint, targetElement, obstacleRect, pathRect) {
+            const gap = LAYOUT.boxGap;
+            const obstaclePathRect = pathRect || obstacleRect;
+            const fallbackTop = obstaclePathRect.bottom + gap;
+            const dx = targetPoint.x - sourcePoint.x;
+
+            if (Math.abs(dx) < 1) {
+                return fallbackTop;
+            }
+
+            const segmentLeft = Math.min(sourcePoint.x, targetPoint.x);
+            const segmentRight = Math.max(sourcePoint.x, targetPoint.x);
+            const overlapLeft = Math.max(segmentLeft, obstaclePathRect.left);
+            const overlapRight = Math.min(segmentRight, obstaclePathRect.right);
+
+            if (overlapLeft > overlapRight) {
+                return fallbackTop;
+            }
+
+            const ratios = [overlapLeft, overlapRight].map(function (x) {
+                return (x - sourcePoint.x) / dx;
+            }).filter(function (ratio) {
+                return ratio > 0 && ratio < 1;
+            });
+
+            if (!ratios.length) {
+                return fallbackTop;
+            }
+
+            const closestObstacleRatio = Math.min.apply(null, ratios);
+            const requiredCenterY = sourcePoint.y
+                + (obstaclePathRect.bottom + gap - sourcePoint.y) / closestObstacleRatio;
+
+            return Math.max(fallbackTop, requiredCenterY - targetElement.offsetHeight / 2);
+        }
+
+        function moveElementBelow(element, obstacleRect, sourcePoint, targetPoint, pathRect) {
+            const top = parseFloat(element.style.top) || 0;
+            const targetTop = getTargetTopBelowObstacle(sourcePoint, targetPoint, element, obstacleRect, pathRect);
+
+            if (top < targetTop) {
+                setNodePosition(element, parseFloat(element.style.left) || 0, targetTop);
+                return true;
+            }
+
+            return false;
+        }
+
+        function resolveColumnVerticalOverlaps(columns) {
+            columns.forEach(function (column) {
+                let bottom = LAYOUT.outerGap;
+
+                column.forEach(function (element) {
+                    const top = parseFloat(element.style.top) || 0;
+
+                    if (top < bottom) {
+                        setNodePosition(element, parseFloat(element.style.left) || 0, bottom);
+                    }
+
+                    bottom = (parseFloat(element.style.top) || 0) + element.offsetHeight + LAYOUT.boxGap;
+                });
+            });
+        }
+
+        function avoidAlternativePathCollisions(state, frameElements, objectElements, objectColumns) {
+            const referencesByObject = buildObjectReferenceMap(state);
+            const objectIds = state.objects.map(function (object) {
+                return object.id;
+            });
+            const edges = [];
+
+            state.frames.forEach(function (frame, frameIndex) {
+                const reachable = collectReachableObjects(frame.bindings.map(function (binding) {
+                    return binding.target;
+                }), referencesByObject);
+
+                frame.bindings.forEach(function (binding) {
+                    edges.push({
+                        sourceElement: frameElements[frameIndex],
+                        sourceId: "",
+                        sourceReachable: reachable,
+                        targetId: binding.target
+                    });
+                });
+            });
+
+            state.objects.forEach(function (object) {
+                const reachable = collectReachableObjects([object.id], referencesByObject);
+
+                object.collectionItems.forEach(function (reference) {
+                    edges.push({
+                        sourceElement: objectElements.get(object.id),
+                        sourceId: object.id,
+                        sourceReachable: reachable,
+                        targetId: reference.target
+                    });
+                });
+            });
+
+            for (let pass = 0; pass < state.objects.length; pass += 1) {
+                let changed = false;
+
+                edges.forEach(function (edge) {
+                    const targetElement = objectElements.get(edge.targetId);
+
+                    if (!edge.sourceElement || !targetElement) {
+                        return;
+                    }
+
+                    const sourceRect = rectInStage(edge.sourceElement);
+                    const targetRect = rectInStage(targetElement);
+                    const sourcePoint = rectCenter(sourceRect);
+                    const targetPoint = rectCenter(targetRect);
+
+                    objectIds.forEach(function (obstacleId) {
+                        if (obstacleId === edge.sourceId || obstacleId === edge.targetId) {
+                            return;
+                        }
+
+                        if (!edge.sourceReachable.has(obstacleId)) {
+                            return;
+                        }
+
+                        if (!objectReachesTarget(referencesByObject, obstacleId, edge.targetId, new Set())) {
+                            return;
+                        }
+
+                        const obstacleElement = objectElements.get(obstacleId);
+
+                        if (!obstacleElement) {
+                            return;
+                        }
+
+                        const obstacleRect = rectInStage(obstacleElement);
+                        const pathRect = inflateRect(obstacleRect, LAYOUT.alternativePathClearance);
+
+                        if (segmentIntersectsRect(sourcePoint, targetPoint, pathRect)) {
+                            changed = moveElementBelow(targetElement, obstacleRect, sourcePoint, targetPoint, pathRect) || changed;
+                        }
+                    });
+                });
+
+                if (changed) {
+                    resolveColumnVerticalOverlaps(objectColumns);
+                } else {
+                    break;
+                }
+            }
+        }
+
+        function positionDefault(state, frameElements, objectElements) {
+            const objectLevels = computeObjectLevels(state);
+            const columns = [frameElements].concat(
+                buildOrderedObjectColumns(state, objectElements, objectLevels)
+            );
+            const columnWidths = columns.map(function (column) {
+                if (!column || !column.length) {
+                    return 0;
+                }
+
+                return column.reduce(function (width, element) {
+                    return Math.max(width, element.offsetWidth);
+                }, 0);
+            });
+            const columnHeights = columns.map(function (column) {
+                if (!column || !column.length) {
+                    return 0;
+                }
+
+                return column.reduce(function (height, element) {
+                    return height + element.offsetHeight;
+                }, 0) + LAYOUT.boxGap * (column.length - 1);
+            });
+            const objectColumns = columns.slice(1);
+            const objectColumnWidths = columnWidths.slice(1);
+            const regularColumnGap = Math.max(44, Math.round(getStageWidth() * 0.07));
+            const objectGaps = objectColumns.slice(0, -1).map(function () {
+                return regularColumnGap;
+            });
+            const objectContentWidth = objectColumnWidths.reduce(function (sum, width) {
+                return sum + width;
+            }, 0) + objectGaps.reduce(function (sum, gap) {
+                return sum + gap;
+            }, 0);
+            const contentHeight = columnHeights.reduce(function (height, columnHeight) {
+                return Math.max(height, columnHeight);
+            }, 0);
+            const frameContentWidth = columnWidths[0] || 0;
+            const requiredUsableWidth = Math.max(
+                frameContentWidth * 3,
+                objectContentWidth * 1.5
+            );
+            const stageWidth = Math.max(
+                getStageWidth(),
+                Math.ceil(requiredUsableWidth + LAYOUT.outerGap * 2)
+            );
+            const stageHeight = Math.max(LAYOUT.minHeight, contentHeight + LAYOUT.outerGap * 2);
+            const usableWidth = stageWidth - LAYOUT.outerGap * 2;
+            const frameAreaLeft = LAYOUT.outerGap;
+            const frameAreaWidth = usableWidth / 3;
+            const objectAreaLeft = frameAreaLeft + frameAreaWidth;
+            const objectAreaWidth = usableWidth * 2 / 3;
+            const yStart = Math.max(LAYOUT.outerGap, Math.round((stageHeight - contentHeight) / 2));
+
+            updateStageWidth(stageWidth);
+            stage.style.height = stageHeight + "px";
+
+            if (columns[0] && columns[0].length) {
+                let frameY = yStart;
+                const frameX = Math.round(
+                    frameAreaLeft + Math.max(0, (frameAreaWidth - frameContentWidth) / 2)
+                );
+
+                columns[0].forEach(function (element) {
+                    setNodePosition(element, frameX, frameY);
+                    frameY += element.offsetHeight + LAYOUT.boxGap;
+                });
+            }
+
+            let objectX = Math.round(
+                objectAreaLeft + Math.max(0, (objectAreaWidth - objectContentWidth) / 2)
+            );
+
+            objectColumns.forEach(function (column, index) {
+                if (!column || !column.length) {
+                    return;
+                }
+
+                let y = yStart;
+                column.forEach(function (element) {
+                    setNodePosition(element, objectX, y);
+                    y += element.offsetHeight + LAYOUT.boxGap;
+                });
+
+                objectX += objectColumnWidths[index] + (objectGaps[index] || 0);
+            });
+
+            avoidAlternativePathCollisions(state, frameElements, objectElements, objectColumns);
+        }
+
+        function updateStageHeight(nodeElements) {
+            let bottom = isFullscreen()
+                ? Math.max(LAYOUT.minHeight, viewport.clientHeight)
+                : LAYOUT.minHeight;
+
+            nodeElements.forEach(function (element) {
+                const rect = rectInStage(element);
+                bottom = Math.max(bottom, rect.bottom + LAYOUT.outerGap);
+            });
+
+            stage.style.height = bottom + "px";
+            arrowsSvg.setAttribute("viewBox", "0 0 " + stage.offsetWidth + " " + bottom);
+        }
+
+        function updateStageWidthToFit(nodeElements) {
+            let right = LAYOUT.minWidth;
+
+            nodeElements.forEach(function (element) {
+                const rect = rectInStage(element);
+                right = Math.max(right, rect.right + LAYOUT.outerGap);
+            });
+
+            updateStageWidth(right);
+        }
+
+        function sideNormal(side) {
+            if (side === "left") {
+                return { x: -1, y: 0 };
+            }
+
+            if (side === "right") {
+                return { x: 1, y: 0 };
+            }
+
+            if (side === "top") {
+                return { x: 0, y: -1 };
+            }
+
+            return { x: 0, y: 1 };
+        }
+
+        function chooseConnectionSide(fromRect, toRect) {
+            if (toRect.right < fromRect.left) {
+                return "left";
+            }
+
+            if (toRect.left > fromRect.right) {
+                return "right";
+            }
+
+            if (toRect.bottom < fromRect.top) {
+                return "top";
+            }
+
+            if (toRect.top > fromRect.bottom) {
+                return "bottom";
+            }
+
+            const dx = toRect.centerX - fromRect.centerX;
+            const dy = toRect.centerY - fromRect.centerY;
+
+            if (Math.abs(dx) >= Math.abs(dy)) {
+                return dx >= 0 ? "right" : "left";
+            }
+
+            return dy >= 0 ? "bottom" : "top";
+        }
+
+        function chooseReferenceSide(sourceRect, targetRect) {
+            return targetRect.centerX < sourceRect.centerX ? "left" : "right";
+        }
+
+        function chooseReferenceSourceSide(reference, sourceRect, targetRect) {
+            if (reference.classList.contains("python-state-shortcode__reference--collection-item")) {
+                return chooseConnectionSide(rectInStage(reference), targetRect);
+            }
+
+            return chooseReferenceSide(sourceRect, targetRect);
+        }
+
+        function borderPointForSide(rect, side, anchor) {
+            const horizontalPadding = Math.min(LAYOUT.cornerGap, rect.width / 2);
+            const verticalPadding = Math.min(LAYOUT.cornerGap, rect.height / 2);
+
+            if (side === "left" || side === "right") {
+                return {
+                    x: side === "left" ? rect.left : rect.right,
+                    y: clamp(anchor.y, rect.top + verticalPadding, rect.bottom - verticalPadding),
+                    side: side
+                };
+            }
+
+            return {
+                x: clamp(anchor.x, rect.left + horizontalPadding, rect.right - horizontalPadding),
+                y: side === "top" ? rect.top : rect.bottom,
+                side: side
+            };
+        }
+
+        function outsidePoint(point, amount) {
+            const normal = sideNormal(point.side);
+
+            return {
+                x: point.x + normal.x * amount,
+                y: point.y + normal.y * amount,
+                side: point.side
+            };
+        }
+
+        function pointFromPort(portRect, side) {
+            if (side === "bottom") {
+                return {
+                    x: portRect.centerX,
+                    y: portRect.centerY,
+                    side: side
+                };
+            }
+
+            if (side === "top") {
+                return {
+                    x: portRect.centerX,
+                    y: portRect.centerY,
+                    side: side
+                };
+            }
+
+            if (side === "left") {
+                return {
+                    x: portRect.left,
+                    y: portRect.centerY,
+                    side: side
+                };
+            }
+
+            return {
+                x: portRect.right,
+                y: portRect.centerY,
+                side: side
+            };
+        }
+
+        function createArrowGeometry(start, end, arrowheadLength) {
+            const dx = end.x - start.x;
+            const dy = end.y - start.y;
+            const distance = Math.max(70, Math.sqrt(dx * dx + dy * dy));
+            const bend = Math.min(90, distance * 0.32);
+            const startNormal = sideNormal(start.side);
+            const endNormal = sideNormal(end.side);
+            const lineEnd = {
+                x: end.x + endNormal.x * arrowheadLength,
+                y: end.y + endNormal.y * arrowheadLength,
+                side: end.side
+            };
+            const control1 = {
+                x: start.x + startNormal.x * bend,
+                y: start.y + startNormal.y * bend
+            };
+            const control2 = {
+                x: end.x + endNormal.x * bend,
+                y: end.y + endNormal.y * bend
+            };
+
+            return {
+                path: [
+                    "M", start.x, start.y,
+                    "C", control1.x, control1.y, control2.x, control2.y, lineEnd.x, lineEnd.y
+                ].join(" "),
+                control2: control2
+            };
+        }
+
+        function createArrowheadPoints(end, controlPoint, length, width) {
+            const dx = end.x - controlPoint.x;
+            const dy = end.y - controlPoint.y;
+            const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+            const ux = dx / distance;
+            const uy = dy / distance;
+            const nx = -uy;
+            const ny = ux;
+            const baseX = end.x - ux * length;
+            const baseY = end.y - uy * length;
+
+            return [
+                [end.x, end.y],
+                [baseX + nx * width, baseY + ny * width],
+                [baseX - nx * width, baseY - ny * width]
+            ].map(function (point) {
+                return point[0] + "," + point[1];
+            }).join(" ");
+        }
+
+        function svgElement(tagName, className) {
+            const element = document.createElementNS("http://www.w3.org/2000/svg", tagName);
+            element.classList.add(className);
+            return element;
+        }
+
+        function createEdgePath(className, pathData) {
+            const path = svgElement("path", className);
+
+            path.setAttribute("d", pathData);
+
+            return path;
+        }
+
+        function createEdgeArrowhead(className, points) {
+            const arrowhead = svgElement("polygon", className);
+
+            arrowhead.setAttribute("points", points);
+
+            return arrowhead;
+        }
+
+        function createEdgeCircle(className, point, radius) {
+            const circle = svgElement("circle", className);
+
+            circle.setAttribute("cx", point.x);
+            circle.setAttribute("cy", point.y);
+            circle.setAttribute("r", radius);
+
+            return circle;
+        }
+
+        function setEdgeActive(edgeId, active) {
+            const edge = arrowsSvg.querySelector("[data-python-state-edge-id=\"" + edgeId + "\"]");
+
+            if (edge) {
+                edge.classList.toggle("python-state-shortcode__edge--active", active);
+            }
+        }
+
+        function drawArrows(objectElements) {
+            arrowsSvg.querySelectorAll(".python-state-shortcode__edge").forEach(function (edge) {
+                edge.remove();
+            });
+
+            root.querySelectorAll("[data-python-state-target]").forEach(function (reference, index) {
+                const target = reference.dataset.pythonStateTarget;
+                const object = objectElements.get(target);
+
+                if (!target || !object) {
+                    return;
+                }
+
+                const port = reference.querySelector(".python-state-shortcode__reference-port");
+                const sourceBox = reference.closest(".python-state-shortcode__box");
+                const sourceRect = rectInStage(sourceBox);
+                const objectRect = rectInStage(object);
+                const sourceSide = chooseReferenceSourceSide(reference, sourceRect, objectRect);
+
+                reference.dataset.pythonStateReferenceSide = sourceSide;
+
+                const portRect = rectInStage(port || reference);
+                const portAnchor = { x: portRect.centerX, y: portRect.centerY };
+                const targetSide = chooseConnectionSide(objectRect, portRect);
+                const targetBorder = borderPointForSide(objectRect, targetSide, portAnchor);
+                const visualPortPoint = rectCenter(portRect);
+                const linePortPoint = pointFromPort(portRect, sourceSide);
+                const start = outsidePoint(linePortPoint, LAYOUT.arrowGap);
+                const end = outsidePoint(targetBorder, LAYOUT.arrowGap);
+                const arrowheadLength = 8;
+                const arrowGeometry = createArrowGeometry(start, end, arrowheadLength);
+                const pathData = arrowGeometry.path;
+                const arrowheadPoints = createArrowheadPoints(end, arrowGeometry.control2, arrowheadLength, 4);
+                const edge = svgElement("g", "python-state-shortcode__edge");
+                const edgeId = "edge-" + index;
+
+                edge.setAttribute("aria-hidden", "true");
+                edge.dataset.pythonStateEdgeId = edgeId;
+                reference.dataset.pythonStateEdgeId = edgeId;
+                reference.onmouseenter = function () {
+                    setEdgeActive(edgeId, true);
+                };
+                reference.onmouseleave = function () {
+                    setEdgeActive(edgeId, false);
+                };
+                edge.addEventListener("mouseenter", function () {
+                    setEdgeActive(edgeId, true);
+                });
+                edge.addEventListener("mouseleave", function () {
+                    setEdgeActive(edgeId, false);
+                });
+                edge.appendChild(createEdgePath("python-state-shortcode__edge-hit", pathData));
+                edge.appendChild(createEdgePath("python-state-shortcode__edge-halo", pathData));
+                edge.appendChild(createEdgePath("python-state-shortcode__edge-line", pathData));
+                edge.appendChild(createEdgeArrowhead("python-state-shortcode__edge-arrowhead-halo", arrowheadPoints));
+                edge.appendChild(createEdgeArrowhead("python-state-shortcode__edge-arrowhead", arrowheadPoints));
+                edge.appendChild(createEdgeCircle("python-state-shortcode__edge-port-halo", visualPortPoint, 5.2));
+                edge.appendChild(createEdgeCircle("python-state-shortcode__edge-port", visualPortPoint, 4.2));
+                arrowsSvg.appendChild(edge);
+            });
+        }
+
+        function isFullscreen() {
+            return root.classList.contains("python-state-shortcode--fullscreen");
+        }
+
+        function isTransparentColor(value) {
+            return !value || value === "transparent" || value === "rgba(0, 0, 0, 0)";
+        }
+
+        function getPageBackgroundColor() {
+            const candidates = [document.body, document.documentElement, root.parentElement].filter(Boolean);
+
+            for (let index = 0; index < candidates.length; index += 1) {
+                const background = window.getComputedStyle(candidates[index]).backgroundColor;
+
+                if (!isTransparentColor(background)) {
+                    return background;
+                }
+            }
+
+            return "transparent";
+        }
+
+        function updateFullpageMetrics() {
+            const nav = document.querySelector("nav");
+            const navRect = nav ? nav.getBoundingClientRect() : null;
+            const top = navRect ? Math.max(0, Math.round(navRect.bottom)) : 0;
+
+            root.style.setProperty("--python-state-fullpage-top", top + "px");
+            root.style.setProperty("--python-state-fullpage-bg", getPageBackgroundColor());
+        }
+
+        function setPageScrollLocked(locked) {
+            if (locked) {
+                savedDocumentOverflow = document.documentElement.style.overflow;
+                savedBodyOverflow = document.body.style.overflow;
+                document.documentElement.style.overflow = "hidden";
+                document.body.style.overflow = "hidden";
+                return;
+            }
+
+            document.documentElement.style.overflow = savedDocumentOverflow;
+            document.body.style.overflow = savedBodyOverflow;
+        }
+
+        function refreshGeometry(allNodeElements, objectElements) {
+            updateStageHeight(allNodeElements);
+            drawArrows(objectElements);
+        }
+
+        function setFullscreenMode(enabled, allNodeElements, objectElements) {
+            if (enabled === isFullscreen()) {
+                return;
+            }
+
+            const preTogglePositions = captureNodeViewportPositions(allNodeElements);
+
+            if (enabled) {
+                updateFullpageMetrics();
+            }
+
+            root.classList.toggle("python-state-shortcode--fullscreen", enabled);
+            fullscreenButton.setAttribute("aria-pressed", enabled ? "true" : "false");
+            fullscreenButton.textContent = enabled ? "Exit" : "Full page";
+            setPageScrollLocked(enabled);
+
+            window.requestAnimationFrame(function () {
+                if (enabled) {
+                    applyNodeViewportPositions(preTogglePositions);
+                    updateStageWidthToFit(allNodeElements);
+                } else {
+                    resetStageWidthToViewport();
+                    applyNodeViewportPositions(preTogglePositions);
+                    allNodeElements.forEach(fitNodeIntoCompactStage);
+                }
+
+                refreshGeometry(allNodeElements, objectElements);
+            });
+        }
+
+        function makeDraggable(element, objectElements) {
+            let offsetX = 0;
+            let offsetY = 0;
+            let dragging = false;
+
+            element.addEventListener("pointerdown", function (event) {
+                dragging = true;
+                element.classList.add("python-state-shortcode__box--dragging");
+                element.setPointerCapture(event.pointerId);
+
+                const rect = element.getBoundingClientRect();
+                offsetX = event.clientX - rect.left;
+                offsetY = event.clientY - rect.top;
+            });
+
+            element.addEventListener("pointermove", function (event) {
+                if (!dragging) {
+                    return;
+                }
+
+                const stageRect = stage.getBoundingClientRect();
+                const maxX = Math.max(0, stage.clientWidth - element.offsetWidth);
+                const maxY = Math.max(0, stage.clientHeight - element.offsetHeight);
+                const x = clamp(event.clientX - stageRect.left - offsetX, 0, maxX);
+                const y = clamp(event.clientY - stageRect.top - offsetY, 0, maxY);
+
+                setNodePosition(element, x, y);
+                drawArrows(objectElements);
+            });
+
+            function stopDragging() {
+                dragging = false;
+                element.classList.remove("python-state-shortcode__box--dragging");
+            }
+
+            element.addEventListener("pointerup", stopDragging);
+            element.addEventListener("pointercancel", stopDragging);
+        }
+
+        function render(state) {
+            const frameElements = state.frames.map(function (frame) {
+                const frameElement = renderFrame(frame);
+                nodes.appendChild(frameElement);
+                return frameElement;
+            });
+            const objectElements = new Map();
+
+            state.objects.forEach(function (object) {
+                const objectElement = renderObject(object);
+                objectElements.set(object.id, objectElement);
+                nodes.appendChild(objectElement);
+            });
+
+            const allNodeElements = frameElements.concat(Array.from(objectElements.values()));
+
+            positionDefault(state, frameElements, objectElements);
+            updateStageHeight(allNodeElements);
+            drawArrows(objectElements);
+
+            allNodeElements.forEach(function (element) {
+                makeDraggable(element, objectElements);
+            });
+
+            fullscreenButton.addEventListener("click", function () {
+                setFullscreenMode(!isFullscreen(), allNodeElements, objectElements);
+            });
+
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape" && isFullscreen()) {
+                    setFullscreenMode(false, allNodeElements, objectElements);
+                }
+            });
+
+            window.addEventListener("resize", function () {
+                if (isFullscreen()) {
+                    updateFullpageMetrics();
+                    updateStageWidthToFit(allNodeElements);
+                } else {
+                    resetStageWidthToViewport();
+                }
+
+                allNodeElements.forEach(clampNodePosition);
+                refreshGeometry(allNodeElements, objectElements);
+            });
+        }
+
+        const parsed = parseState();
+
+        if (parsed.error) {
+            renderError(parsed.error);
+        } else {
+            render(parsed.state);
+        }
+    }());
+    </script>
+</div>
