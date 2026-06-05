@@ -215,10 +215,10 @@ frames:
 objects:
   name:
     type: str
-    value: Alex
+    value: Alex 22.3
   number:
     type: float
-    value: 1.5
+    value: 22.3
 {% end %}
 
 
