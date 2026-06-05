@@ -62,6 +62,7 @@
     position: absolute;
     inset: 0;
     z-index: 2;
+    pointer-events: none;
 }
 
 .python-state-shortcode__box {
@@ -77,6 +78,7 @@
     cursor: grab;
     user-select: none;
     touch-action: none;
+    pointer-events: auto;
 }
 
 .python-state-shortcode__box:active {
@@ -200,17 +202,8 @@
 }
 
 .python-state-shortcode__edge {
-    pointer-events: visibleStroke;
+    pointer-events: none;
     color: #60a5fa;
-}
-
-.python-state-shortcode__edge-hit {
-    fill: none;
-    stroke: transparent;
-    stroke-width: 14;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    pointer-events: stroke;
 }
 
 .python-state-shortcode__edge-halo {
@@ -228,6 +221,7 @@
     stroke-width: 1.5;
     stroke-linecap: round;
     stroke-linejoin: round;
+    pointer-events: none;
     transition: stroke 140ms ease;
 }
 
@@ -248,6 +242,7 @@
 
 .python-state-shortcode__edge-arrowhead {
     fill: currentColor;
+    pointer-events: none;
     transition: fill 140ms ease;
 }
 
@@ -255,6 +250,7 @@
     fill: currentColor;
     stroke: currentColor;
     stroke-width: 1;
+    pointer-events: none;
     transition: fill 140ms ease, stroke 140ms ease, r 140ms ease;
 }
 
@@ -373,7 +369,8 @@
             boxGap: 14,
             arrowGap: 7,
             cornerGap: 10,
-            alternativePathClearance: 18
+            alternativePathClearance: 18,
+            edgeEndpointHitRadius: 12
         };
 
         function stableId(value, fallback) {
@@ -1864,12 +1861,51 @@
             return circle;
         }
 
+        function distanceBetweenPoints(left, right) {
+            const dx = left.x - right.x;
+            const dy = left.y - right.y;
+
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function getPointerPointInStage(event) {
+            const rect = stage.getBoundingClientRect();
+
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        }
+
         function setEdgeActive(edgeId, active) {
             const edge = arrowsSvg.querySelector("[data-python-state-edge-id=\"" + edgeId + "\"]");
 
             if (edge) {
                 edge.classList.toggle("python-state-shortcode__edge--active", active);
             }
+        }
+
+        function updateActiveEdgesAtPoint(point) {
+            arrowsSvg.querySelectorAll(".python-state-shortcode__edge").forEach(function (edge) {
+                const source = {
+                    x: Number(edge.dataset.pythonStateSourceX),
+                    y: Number(edge.dataset.pythonStateSourceY)
+                };
+                const target = {
+                    x: Number(edge.dataset.pythonStateTargetX),
+                    y: Number(edge.dataset.pythonStateTargetY)
+                };
+                const active = distanceBetweenPoints(point, source) <= LAYOUT.edgeEndpointHitRadius
+                    || distanceBetweenPoints(point, target) <= LAYOUT.edgeEndpointHitRadius;
+
+                edge.classList.toggle("python-state-shortcode__edge--active", active);
+            });
+        }
+
+        function clearActiveEdges() {
+            arrowsSvg.querySelectorAll(".python-state-shortcode__edge--active").forEach(function (edge) {
+                edge.classList.remove("python-state-shortcode__edge--active");
+            });
         }
 
         function drawArrows(objectElements) {
@@ -1910,6 +1946,10 @@
 
                 edge.setAttribute("aria-hidden", "true");
                 edge.dataset.pythonStateEdgeId = edgeId;
+                edge.dataset.pythonStateSourceX = visualPortPoint.x;
+                edge.dataset.pythonStateSourceY = visualPortPoint.y;
+                edge.dataset.pythonStateTargetX = end.x;
+                edge.dataset.pythonStateTargetY = end.y;
                 reference.dataset.pythonStateEdgeId = edgeId;
                 reference.onmouseenter = function () {
                     setEdgeActive(edgeId, true);
@@ -1917,13 +1957,6 @@
                 reference.onmouseleave = function () {
                     setEdgeActive(edgeId, false);
                 };
-                edge.addEventListener("mouseenter", function () {
-                    setEdgeActive(edgeId, true);
-                });
-                edge.addEventListener("mouseleave", function () {
-                    setEdgeActive(edgeId, false);
-                });
-                edge.appendChild(createEdgePath("python-state-shortcode__edge-hit", pathData));
                 edge.appendChild(createEdgePath("python-state-shortcode__edge-halo", pathData));
                 edge.appendChild(createEdgePath("python-state-shortcode__edge-line", pathData));
                 edge.appendChild(createEdgeArrowhead("python-state-shortcode__edge-arrowhead-halo", arrowheadPoints));
@@ -2085,6 +2118,12 @@
                     setFullscreenMode(false, allNodeElements, objectElements);
                 }
             });
+
+            stage.addEventListener("pointermove", function (event) {
+                updateActiveEdgesAtPoint(getPointerPointInStage(event));
+            });
+
+            stage.addEventListener("pointerleave", clearActiveEdges);
 
             window.addEventListener("resize", function () {
                 if (isFullscreen()) {
