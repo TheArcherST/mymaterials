@@ -1,6 +1,6 @@
 +++
-title = "Основные языковые конструкции в Python"
-date = 2026-05-28
+title = "Основные языковые конструкции Python"
+date = 2026-06-06
 [taxonomies]
 tags = ["Python"]
 +++
