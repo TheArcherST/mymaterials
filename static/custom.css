@@ -5,10 +5,10 @@
 }
 
 main {
-	font-family: "Noto Serif";
-
-	p, p ~ div{
-		font-family: "Noto Sans";
-	}
+	font-family: "Noto Serif", serif;
 }
 
+main p,
+main p ~ div {
+	font-family: "Noto Sans", sans-serif;
+}
