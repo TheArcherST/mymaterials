@@ -1,5 +1,5 @@
 +++
-title = "Python, FastAPI, 6."
+title = "Python, FastAPI, 7."
 date = 2026-06-05
 [taxonomies]
 tags = ["python", "fastapi"]
