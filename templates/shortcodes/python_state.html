@@ -4,12 +4,25 @@
 
 <style>
 .python-state-shortcode {
+    --python-state-border-color: var(--border-color, currentColor);
+    --python-state-hover-bg: var(--bg-1, rgba(127, 127, 127, 0.12));
+    --python-state-box-bg: var(--bg, var(--bg-0, transparent));
+    --python-state-fullpage-bg: var(--bg-0, transparent);
+    --python-state-edge-color: #2563eb;
+    --python-state-edge-active-color: #1d4ed8;
+    --python-state-edge-halo-color: rgba(36, 41, 46, 0.18);
     position: relative;
-    border: 1px solid white;
+    border: 1px solid var(--python-state-border-color);
     border-radius: 2px;
     overflow: hidden;
     padding: 1em;
     margin: 2em 0;
+}
+
+:root.dark .python-state-shortcode {
+    --python-state-edge-color: #60a5fa;
+    --python-state-edge-active-color: #93c5fd;
+    --python-state-edge-halo-color: rgba(255, 255, 255, 0.92);
 }
 
 .python-state-shortcode__header {
@@ -21,7 +34,7 @@
 }
 
 .python-state-shortcode__fullscreen-button {
-    border: 1px solid white;
+    border: 1px solid var(--python-state-border-color);
     border-radius: 2px;
     background: transparent;
     color: inherit;
@@ -35,7 +48,7 @@
 
 .python-state-shortcode__fullscreen-button:hover,
 .python-state-shortcode__fullscreen-button:focus-visible {
-    background: rgba(255, 255, 255, 0.12);
+    background: var(--python-state-hover-bg);
 }
 
 .python-state-shortcode__viewport {
@@ -71,9 +84,9 @@
     width: max-content;
     min-width: 4.5rem;
     max-width: 18rem;
-    border: 1px solid white;
+    border: 1px solid var(--python-state-border-color);
     border-radius: 2px;
-    background: var(--bg, transparent);
+    background: var(--python-state-box-bg);
     padding: 0.55em 0.7em;
     cursor: grab;
     user-select: none;
@@ -172,7 +185,7 @@
     height: 2.15em;
     min-height: 0;
     padding: 0;
-    border: 1px solid white;
+    border: 1px solid var(--python-state-border-color);
     box-sizing: border-box;
 }
 
@@ -203,12 +216,12 @@
 
 .python-state-shortcode__edge {
     pointer-events: none;
-    color: #60a5fa;
+    color: var(--python-state-edge-color);
 }
 
 .python-state-shortcode__edge-halo {
     fill: none;
-    stroke: rgba(255, 255, 255, 0);
+    stroke: transparent;
     stroke-width: 4;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -227,14 +240,14 @@
 
 .python-state-shortcode__edge-port-halo {
     fill: none;
-    stroke: rgba(255, 255, 255, 0);
+    stroke: transparent;
     stroke-width: 5;
     transition: stroke 140ms ease;
 }
 
 .python-state-shortcode__edge-arrowhead-halo {
     fill: none;
-    stroke: rgba(255, 255, 255, 0);
+    stroke: transparent;
     stroke-width: 3;
     stroke-linejoin: round;
     transition: stroke 140ms ease;
@@ -257,7 +270,7 @@
 .python-state-shortcode__edge:hover,
 .python-state-shortcode__edge:focus-visible,
 .python-state-shortcode__edge--active {
-    color: #93c5fd;
+    color: var(--python-state-edge-active-color);
     outline: none;
 }
 
@@ -267,17 +280,17 @@
 .python-state-shortcode__edge:hover .python-state-shortcode__edge-port-halo,
 .python-state-shortcode__edge:focus-visible .python-state-shortcode__edge-port-halo,
 .python-state-shortcode__edge--active .python-state-shortcode__edge-port-halo {
-    stroke: rgba(255, 255, 255, 0.92);
+    stroke: var(--python-state-edge-halo-color);
 }
 
 .python-state-shortcode__edge:hover .python-state-shortcode__edge-arrowhead-halo,
 .python-state-shortcode__edge:focus-visible .python-state-shortcode__edge-arrowhead-halo,
 .python-state-shortcode__edge--active .python-state-shortcode__edge-arrowhead-halo {
-    stroke: rgba(255, 255, 255, 0.92);
+    stroke: var(--python-state-edge-halo-color);
 }
 
 .python-state-shortcode__error {
-    border: 1px solid white;
+    border: 1px solid var(--python-state-border-color);
     border-radius: 2px;
     padding: 0.75em 0.9em;
     max-width: 42rem;

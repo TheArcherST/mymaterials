@@ -1,6 +1,6 @@
 <style>
 .tbox-container {
-    border: 1px solid white; 
+    border: 1px solid var(--border-color, currentColor); 
     border-radius: 2px;
     overflow: hidden;
     padding: 1em;
@@ -28,4 +28,3 @@
 
 </div>
 </div>
-
