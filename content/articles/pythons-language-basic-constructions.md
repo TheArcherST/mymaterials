@@ -160,7 +160,7 @@ b.append(a)
 ```
 
 ```python
-print("Hello world")
+print("Hello world" + "!")
 print(str("Hello world"))
 a = print()
 ```
@@ -179,7 +179,7 @@ a = "Well..."
 
 ```python
 print("Hello!")
-a = "Well..."
+a = "Well..." + "."
 a = [a]
 b = print(a)
 ```
@@ -188,6 +188,7 @@ b = print(a)
 
 ```python
 a = print(print())
+a = [a][0]
 str(print(str(a)))
 ```
 
