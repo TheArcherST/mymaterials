@@ -3,3 +3,31 @@
   min-height: 1lh;
   width: 100%;
 }
+
+main {
+	@font-face {
+	    font-family: "ZedTextFtl";
+	    src: url("fonts/notoserif/NotoSerif-Regular.ttf"), local("ttf");
+	    font-weight: 400;
+	    font-style: normal;
+	    font-display: swap;
+	}
+
+	@font-face {
+	    font-family: "ZedTextFtl";
+	    src: url("fonts/notoserif/NotoSerif-Bold.ttf"), local("ttf");
+	    font-weight: 700;
+	    font-style: normal;
+	    font-display: swap;
+	}
+
+	@font-face {
+	    font-family: "ZedDisplayFtl";
+	    src: url('fonts/alegreya/Alegreya-Medium.ttf') format("woff2");
+	    src: url("fonts/notosans/NotoSans-Regular.ttf"), local("ttf");
+	    font-weight: 400;
+	    font-style: normal;
+	    font-display: swap;
+	}
+}
+
