@@ -8,7 +8,7 @@ tags = ["python", "fastapi"]
 
 # Полезные ресурсы
 
-1. У постгреса есть официальная документация, доступная и на английском и на русском.  Причём документация эта написана достаточно доступно.  В частности, там есть раздел про транзакции: [на английском](https://www.postgresql.org/docs/18/tutorial-transactions.html) и [на русском](https://postgrespro.ru/docs/postgrespro/18/tutorial-transactions).
+1. У постгреса есть официальная документация, доступная и на английском и на русском.  Причём документация эта написана достаточно доступно.  В частности, там есть раздел про транзакции: [на английском](https://www.postgresql.org/docs/18/tutorial-transactions.html) и [на русском](https://postgrespro.ru/docs/postgresql/18/tutorial-transactions?lang=ru).
 
 
 # Код с занятия
