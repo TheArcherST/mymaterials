@@ -75,3 +75,6 @@ asyncio.run(main())
 
 Попробуйте переписать код из прошлого домашнего задания с asyncpg на asyncpg+SQLAlchemy.
 
+Если прошлое домашнее задание у вас не сделано, возьмите код из [занятия 6](https://mymaterials.ru/lessons/python-fastapi-6/), и перепишите его на SQLAlchemy, добавив получение пользователей.
+
+
