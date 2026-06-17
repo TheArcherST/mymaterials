@@ -9,6 +9,12 @@ tags = ["python", "fastapi"]
 
 [Вот тут можете посмотреть диаграмму](https://mermaid.live/view#pako:eNqVVtFOG0cU_ZXVPCWSvYVgY2xFkQw0LRKkLqGK1LoPy-7YXmF23d11CCVI2CRpJGgjqqqVqlZtpH6AE8XCYCC_MPNHPTOz9q69mxAsYWY8d86ce--Ze2ePmK5FSYnUmu6O2TC8QFtdrzoaPn57s-4ZrYa21LSpE3xXJexPNmQD1meXvFsl3ysz8bFsj5qB7TraxmLViX4fQyx67o5PPYFxwg9Yjx-yU9bnBxMoSaT4yjcrYvc_7IoN-TF2X7G3wOmCDea8w87B7EzD16X4kR_wZ1g6453EEfdpYDaAVRP_b91OrH-5sVFZpz-0qS99_o9dgfEFG-BbnskuRQykWRY8euy9WAGDnoSaZq1ls_fUmSk05GLswMiEOpaayIEaCsMHNNhxvS3B7DXc7PLj2KlRvA1zCxthFY6y4IeggP901K_NXWU3aLhOxXNN6vtAVPNs6PYLAHZSovwhWBmUx7bpeg6wwlEyR4YflCsi4-EoYbHutgMlqL8ggwP-En-HyPxApASsBvxVMrOGYzXVpr9h9FJDQt8IObI38KTLf8Lu88Suh1-vlptmg27vYmM0SdiV_V3HrHwBI0OMWvU0OSh_lSZCz9IclwbKxTS3lWyUN6kuSoMY1w84JM1C3h-X3rIRGJuGTz9NfiPrh9R7rOL9OlKfhmj32Ck_0tg7eZsu-RF_fkNNun5Q9yg8EYIcT26kwiXXcdSiLCygN-An7EJj7yGLd6gnQ_4LJNEX9z1FTDju8yfUbI8AfuVHcucQ9v2wRowoTe1EmaXWYrtWo56vSuKhqFZggFCIInbOf4Y6I7_ubnqf3bsltX0hy--JChuOwOXrSgkLli8QVNwBoeehmKIcyooId_oA7YgClix4j8qriozg8ju4gAcwhpq84n1sllUOgB02UFQeeXZAs-UGNSxt1a1nBMbtFFejGI8UOY5ZIiqxNe2utI7H6SPGwnbsw5SMU7SzbPtSv79Jh85vpBkcc99uUl81hh47g0iOxK8JFHEFUkyvy84EzpQHYx-Fx08B-8coLfxY5WqgLX21trayUSVPx1TjCBMR1bK6gkGHAwnVT19pUbL5sUw2KIKuhoJhbrVc2wkE-ti91CYVdrOQZ6JTCoBYL0s0N5nRUWsIYcMqFUIi_wnEqRKVWrckciTKEfiknMKw_IusnOKhIp4XXfHU0Njb6Tsu6sKnnqxP19qxS3pKsY4XaX262o-rvD7dR8b9Q4-HcKL16LGkoOvJoty9PiX65DMmfL7IY1ZIhtQ92yKlwGvTDNmm3rYhpmRPGFdJAD9olZQwtAygk6qzjz0tw_nWdbdH2zy3XW-QUs1o-pi1W5YR0GXbwK2NTCA06i25bScgpVw-JzFIaY88IaViQc_NFmbmF3ILs7lcfm42Q3ZhNJ_XC8XcfKFQmMvNFfL7GfKjPHNGL87MLeSKdwrzdxaKhfmZfIZQyw5cb029iOXDeP9_Vpk9Fg)
 
+Она демонстрирует полный путь взамодействия Web приложения с FastAPI бэкендом и PostgreSQL базой данных.
+
+Обратите внимание, что на правом конце пути у нас диск, и сейчас это у нас единсвенное место, где данные сохраняются надёжно.  Если выключить всё оборудование, за счёт которого эта цепочка работает, пропадёт всё кроме данных на диске (поскольку и браузер, и наш бэкенд, и Postgres работают за счёт процессора и оперативной памяти, и при выключении оборудования все данные в оперативной памяти будут потеряны).
+
+Так же можно отметить, что логику по которой работает браузер контролирует клиентское устройство (пользователь может выполнить при желании любой JS код в браузере, и даже изменить тот JS код который мы встроили во фронтенд; например, он может поменять вызов fetch как захочет), а вот всю логику бэкенда и базы данных мы контролируем сами, пользователь её менять не может.
+
 
 # Домашнее задание
 
@@ -16,5 +22,5 @@ tags = ["python", "fastapi"]
 
 Создание таблиц можете вынести в отдельный эндпоинт вроде `POST /create-all-tables`.
 
-Если некоторый эндпоинт должен происходить от имени пользователя (например, добавление в корзину), пока просто передавайте в `HTTP` запросе id пользователя от имени которого он должен быть выполнен.
+Если некоторый эндпоинт должен вызываться от имени пользователя (например, добавление в корзину), пока просто передавайте в `HTTP` запросе id пользователя от имени которого он должен быть вызван.  Потом рассмотрим более безопасные варианты.
 
