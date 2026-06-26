@@ -1,10 +1,15 @@
 <style>
 .tbox-container {
-    border: 1px solid var(--border-color, currentColor); 
+    --tbox-border-color: #24292e;
+    border: 1px solid var(--tbox-border-color);
     border-radius: 2px;
     overflow: hidden;
     padding: 1em;
     margin: 2em 0;
+}
+
+:root.dark .tbox-container {
+    --tbox-border-color: #fff;
 }
 
 .tbox-header {

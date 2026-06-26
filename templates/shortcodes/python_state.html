@@ -1,16 +1,17 @@
 {% set python_state_id = id | default(value="") %}
 {% set python_state_title = title | default(value="Python state") %}
 {% set python_state_body = body | default(value="") %}
+{% set python_state_ui_version = config.extra.ui_version_control.python_state | default(value="1") %}
 
 <style>
 .python-state-shortcode {
-    --python-state-border-color: var(--border-color, currentColor);
-    --python-state-hover-bg: var(--bg-1, rgba(127, 127, 127, 0.12));
-    --python-state-box-bg: var(--bg, var(--bg-0, transparent));
-    --python-state-fullpage-bg: var(--bg-0, transparent);
-    --python-state-edge-color: #2563eb;
-    --python-state-edge-active-color: #1d4ed8;
-    --python-state-edge-halo-color: rgba(36, 41, 46, 0.18);
+    --python-state-border-color: #24292e;
+    --python-state-hover-bg: rgba(36, 41, 46, 0.08);
+    --python-state-box-bg: var(--bg-0, #fff);
+    --python-state-fullpage-bg: var(--bg-0, #fff);
+    --python-state-edge-color: #0969da;
+    --python-state-edge-active-color: #0550ae;
+    --python-state-edge-halo-color: rgba(9, 105, 218, 0.2);
     position: relative;
     border: 1px solid var(--python-state-border-color);
     border-radius: 2px;
@@ -19,6 +20,10 @@
 }
 
 :root.dark .python-state-shortcode {
+    --python-state-border-color: #fff;
+    --python-state-hover-bg: rgba(255, 255, 255, 0.12);
+    --python-state-box-bg: var(--bg-0, #121212);
+    --python-state-fullpage-bg: var(--bg-0, #121212);
     --python-state-edge-color: #60a5fa;
     --python-state-edge-active-color: #93c5fd;
     --python-state-edge-halo-color: rgba(255, 255, 255, 0.92);
@@ -28,11 +33,38 @@
     position: absolute;
     top: 0.75rem;
     right: 0.75rem;
+    left: 0.75rem;
     z-index: 4;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 0.35rem;
     pointer-events: none;
 }
 
-.python-state-shortcode__fullscreen-button {
+.python-state-shortcode__header-main,
+.python-state-shortcode__header-left,
+.python-state-shortcode__composition-actions {
+    display: flex;
+    align-items: stretch;
+    gap: 0.35rem;
+}
+
+.python-state-shortcode__header-main {
+    position: relative;
+    flex-direction: row-reverse;
+    margin-left: auto;
+}
+
+.python-state-shortcode__composition-actions {
+    display: none;
+}
+
+.python-state-shortcode--fullscreen .python-state-shortcode__composition-actions {
+    display: flex;
+}
+
+.python-state-shortcode__button {
     border: 1px solid var(--python-state-border-color);
     border-radius: 2px;
     background: transparent;
@@ -45,8 +77,59 @@
     pointer-events: auto;
 }
 
-.python-state-shortcode__fullscreen-button:hover,
-.python-state-shortcode__fullscreen-button:focus-visible {
+.python-state-shortcode__button:hover,
+.python-state-shortcode__button:focus-visible {
+    background: var(--python-state-hover-bg);
+}
+
+.python-state-shortcode__composition-status {
+    position: absolute;
+    top: 0;
+    right: calc(100% + 0.35rem);
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    width: 19em;
+    min-height: calc(1em + 0.6em + 2px);
+    border: 1px solid var(--python-state-border-color);
+    border-radius: 2px;
+    background: var(--python-state-box-bg);
+    color: inherit;
+    font-size: 0.78rem;
+    line-height: 1.2;
+    pointer-events: auto;
+}
+
+.python-state-shortcode__composition-status[hidden] {
+    display: none;
+}
+
+.python-state-shortcode__composition-status-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.3em 0.55em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.python-state-shortcode__composition-status-close {
+    flex: 0 0 auto;
+    align-self: stretch;
+    border: 0;
+    border-left: 1px solid var(--python-state-border-color);
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    padding: 0 0.45em;
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.python-state-shortcode__composition-status-close:hover,
+.python-state-shortcode__composition-status-close:focus-visible {
     background: var(--python-state-hover-bg);
 }
 
@@ -132,6 +215,12 @@
     list-style: none;
 }
 
+.python-state-shortcode__collection--dict {
+    flex-flow: column nowrap;
+    align-items: flex-start;
+    gap: 0.35em;
+}
+
 .python-state-shortcode__reference {
     position: relative;
     display: block;
@@ -159,8 +248,8 @@
     position: absolute;
     top: 50%;
     right: 0.2em;
-    width: 0.48em;
-    height: 0.48em;
+    width: 0.56em;
+    height: 0.56em;
     transform: translateY(-50%);
     border-radius: 999px;
     background: var(--python-state-edge-color);
@@ -198,6 +287,32 @@
     display: none;
 }
 
+.python-state-shortcode__dict-pair {
+    display: flex;
+    align-items: center;
+    min-height: 2.15em;
+}
+
+.python-state-shortcode__dict-separator {
+    padding: 0 0.45em;
+    color: var(--python-state-muted-color);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+.python-state-shortcode__reference--dict-item {
+    width: 2.15em;
+    height: 2.15em;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+}
+
+.python-state-shortcode__reference--dict-item .python-state-shortcode__reference-label {
+    display: none;
+}
+
 .python-state-shortcode__reference--collection-item .python-state-shortcode__reference-port,
 .python-state-shortcode__reference--collection-item[data-python-state-reference-side="left"] .python-state-shortcode__reference-port {
     top: 50%;
@@ -232,7 +347,7 @@
 .python-state-shortcode__edge-line {
     fill: none;
     stroke: currentColor;
-    stroke-width: 1.5;
+    stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
     pointer-events: none;
@@ -263,7 +378,7 @@
 .python-state-shortcode__edge-port {
     fill: currentColor;
     stroke: currentColor;
-    stroke-width: 1;
+    stroke-width: 1.25;
     pointer-events: none;
     transition: fill 140ms ease, stroke 140ms ease, r 140ms ease;
 }
@@ -311,9 +426,14 @@
     font-size: 0.9rem;
 }
 
+.python-state-shortcode__fullpage-placeholder {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 .python-state-shortcode--fullscreen {
     position: fixed;
-    top: var(--python-state-fullpage-top, 0);
+    top: 0;
     right: 0;
     bottom: 0;
     left: 0;
@@ -322,8 +442,8 @@
     flex-direction: column;
     box-sizing: border-box;
     width: 100vw;
-    height: calc(100vh - var(--python-state-fullpage-top, 0px));
-    height: calc(100dvh - var(--python-state-fullpage-top, 0px));
+    height: 100vh;
+    height: 100dvh;
     margin: 0;
     border: 0;
     border-radius: 0;
@@ -349,7 +469,20 @@
 
 <div{% if python_state_id %} id="{{ python_state_id }}"{% endif %} class="python-state-shortcode" data-python-state-shortcode>
     <div class="python-state-shortcode__header">
-        <button class="python-state-shortcode__fullscreen-button" type="button" data-python-state-fullscreen-button aria-pressed="false">Full page</button>
+        <div class="python-state-shortcode__header-left">
+            <button class="python-state-shortcode__button" type="button" data-python-state-reset-button>Reset</button>
+            <div class="python-state-shortcode__composition-actions">
+                <button class="python-state-shortcode__button" type="button" data-python-state-export-composition-button>Copy composition</button>
+                <button class="python-state-shortcode__button" type="button" data-python-state-import-composition-button>Paste composition</button>
+            </div>
+        </div>
+        <div class="python-state-shortcode__header-main">
+            <button class="python-state-shortcode__button" type="button" data-python-state-fullscreen-button aria-pressed="false">Full page</button>
+            <div class="python-state-shortcode__composition-status" data-python-state-composition-status hidden role="status">
+                <span class="python-state-shortcode__composition-status-text" data-python-state-composition-status-text></span>
+                <button class="python-state-shortcode__composition-status-close" type="button" data-python-state-composition-status-close aria-label="Dismiss composition message">&times;</button>
+            </div>
+        </div>
     </div>
 
     <div class="python-state-shortcode__viewport">
@@ -373,8 +506,15 @@
         const arrowsSvg = root.querySelector("[data-python-state-arrows]");
         const dataNode = root.querySelector("[data-python-state-data]");
         const fullscreenButton = root.querySelector("[data-python-state-fullscreen-button]");
-        let savedDocumentOverflow = "";
-        let savedBodyOverflow = "";
+        const resetButton = root.querySelector("[data-python-state-reset-button]");
+        const exportCompositionButton = root.querySelector("[data-python-state-export-composition-button]");
+        const importCompositionButton = root.querySelector("[data-python-state-import-composition-button]");
+        const compositionStatus = root.querySelector("[data-python-state-composition-status]");
+        const compositionStatusText = root.querySelector("[data-python-state-composition-status-text]");
+        const compositionStatusClose = root.querySelector("[data-python-state-composition-status-close]");
+        let fullpageSession = null;
+        const PYTHON_STATE_UI_VERSION = "{{ python_state_ui_version }}";
+        const COMPOSITION_SCHEMA_VERSION = 1;
 
         const LAYOUT = {
             minWidth: 560,
@@ -385,6 +525,18 @@
             cornerGap: 10,
             alternativePathClearance: 18,
             edgeEndpointHitRadius: 12
+        };
+
+        const FULLPAGE_MODE = {
+            className: "python-state-shortcode--fullscreen",
+            placeholderClassName: "python-state-shortcode__fullpage-placeholder",
+            expandedButtonText: "Exit",
+            compactButtonText: "Full page",
+            preservePageScroll: true,
+            anchorPageScrollToDiagramOnExit: true,
+            preserveViewportScroll: true,
+            preserveNodeViewportPositions: false,
+            lockDocumentScroll: true
         };
 
         function stableId(value, fallback) {
@@ -578,7 +730,19 @@
 
                 if (pair) {
                     const item = {};
-                    item[pair[1]] = parseYamlScalar(pair[2].trim(), token.line);
+                    const pairValue = pair[2].trim();
+
+                    if (pairValue) {
+                        item[pair[1]] = parseYamlScalar(pairValue, token.line);
+                    } else {
+                        if (index >= tokens.length || tokens[index].indent <= token.indent) {
+                            dataError("line " + token.line, "expected nested value for " + pair[1]);
+                        }
+
+                        const child = parseYamlBlock(tokens, index, tokens[index].indent);
+                        item[pair[1]] = child.value;
+                        index = child.index;
+                    }
 
                     while (index < tokens.length && tokens[index].indent === indent + 2 && !tokens[index].text.startsWith("-")) {
                         const propertyToken = tokens[index];
@@ -685,6 +849,14 @@
                 return "None";
             }
 
+            if (type === "list") {
+                return "[]";
+            }
+
+            if (type === "dict") {
+                return "{}";
+            }
+
             if (value !== undefined) {
                 return String(value);
             }
@@ -769,6 +941,72 @@
             return validateReference({ object: binding.object }, path, binding.name || index);
         }
 
+        function validateDictPair(pair, path) {
+            assertPlainObject(pair, path);
+            assertAllowedKeys(pair, path, ["key", "value"]);
+
+            if (!Object.prototype.hasOwnProperty.call(pair, "key")) {
+                dataError(path + ".key", "expected a dictionary key reference");
+            }
+
+            if (!Object.prototype.hasOwnProperty.call(pair, "value")) {
+                dataError(path + ".value", "expected a dictionary value reference");
+            }
+
+            return {
+                key: validateReference(pair.key, path + ".key", "key"),
+                value: validateReference(pair.value, path + ".value", "value")
+            };
+        }
+
+        function validateDictItems(value, path) {
+            assertArray(value, path);
+
+            return value.map(function (pair, index) {
+                return validateDictPair(pair, path + "[" + index + "]");
+            });
+        }
+
+        function getCollectionReferences(collectionItems) {
+            const references = [];
+
+            collectionItems.forEach(function (item) {
+                if (item && item.key && item.value) {
+                    references.push(item.key, item.value);
+                    return;
+                }
+
+                references.push(item);
+            });
+
+            return references;
+        }
+
+        function getObjectReferences(object) {
+            return getCollectionReferences(object.collectionItems);
+        }
+
+        function getCollectionItemReferenceCount(collectionItems) {
+            return getCollectionReferences(collectionItems).length;
+        }
+
+        function forEachCollectionReference(collectionItems, callback) {
+            let referenceIndex = 0;
+
+            collectionItems.forEach(function (item, itemIndex) {
+                if (item && item.key && item.value) {
+                    callback(item.key, referenceIndex, itemIndex);
+                    referenceIndex += 1;
+                    callback(item.value, referenceIndex, itemIndex);
+                    referenceIndex += 1;
+                    return;
+                }
+
+                callback(item, referenceIndex, itemIndex);
+                referenceIndex += 1;
+            });
+        }
+
         function validateFrame(entry) {
             const frame = entry.value;
 
@@ -778,8 +1016,8 @@
                 dataError(entry.path + ".id", "must match key " + entry.id);
             }
 
-            if (frame.name !== undefined) {
-                assertString(frame.name, entry.path + ".name");
+            if (frame.name !== undefined && typeof frame.name !== "string") {
+                dataError(entry.path + ".name", "expected a string");
             }
 
             assertArray(frame.bindings, entry.path + ".bindings");
@@ -788,7 +1026,7 @@
 
             return {
                 id: entry.id,
-                name: frame.name || entry.id,
+                name: frame.name && frame.name.trim() ? frame.name : "",
                 bindings: frame.bindings.map(function (binding, index) {
                     if (isPlainObject(binding) && bindingNames.has(binding.name)) {
                         dataError(entry.path + ".bindings[" + index + "].name", "duplicate binding name " + binding.name);
@@ -855,7 +1093,8 @@
             const object = entry.value;
             const type = object.type || object.kind;
             let collectionItems = [];
-            const supportedTypes = new Set(["int", "float", "bool", "NoneType", "str", "list", "function", "object"]);
+            let collectionKind = "";
+            const supportedTypes = new Set(["int", "float", "bool", "NoneType", "str", "list", "dict", "function", "object"]);
 
             assertAllowedKeys(object, entry.path, ["id", "type", "kind", "value", "details"]);
 
@@ -875,9 +1114,13 @@
 
             if (type === "list") {
                 assertArray(object.value, entry.path + ".value");
+                collectionKind = "list";
                 collectionItems = object.value.map(function (reference, index) {
                     return validateReference(reference, entry.path + ".value[" + index + "]", index);
                 });
+            } else if (type === "dict") {
+                collectionKind = "dict";
+                collectionItems = validateDictItems(object.value, entry.path + ".value");
             } else {
                 if (object.value === undefined) {
                     dataError(entry.path + ".value", "expected a value");
@@ -892,23 +1135,151 @@
                 value: object.value,
                 details: normalizeDetails(object.details, entry.path + ".details"),
                 collectionItems: collectionItems,
+                collectionKind: collectionKind,
                 missing: false
             };
         }
 
+        function normalizeCompositionCoordinate(value, path) {
+            if (typeof value !== "number" || !Number.isFinite(value)) {
+                dataError(path, "expected a finite number");
+            }
+
+            return value;
+        }
+
+        function validateCompositionPosition(placement, path) {
+            let position = null;
+
+            if (placement.position !== undefined) {
+                assertPlainObject(placement.position, path + ".position");
+                assertAllowedKeys(placement.position, path + ".position", ["x", "y", "left", "top"]);
+                position = placement.position;
+            } else {
+                position = placement;
+            }
+
+            const rawX = position.x !== undefined ? position.x : position.left;
+            const rawY = position.y !== undefined ? position.y : position.top;
+
+            if (rawX === undefined) {
+                dataError(path + ".position.x", "expected x coordinate");
+            }
+
+            if (rawY === undefined) {
+                dataError(path + ".position.y", "expected y coordinate");
+            }
+
+            return {
+                x: normalizeCompositionCoordinate(rawX, path + ".position.x"),
+                y: normalizeCompositionCoordinate(rawY, path + ".position.y")
+            };
+        }
+
+        function validateCompositionPlacement(placement, path) {
+            assertPlainObject(placement, path);
+            assertAllowedKeys(placement, path, ["key", "position", "x", "y", "left", "top"]);
+            assertString(placement.key, path + ".key");
+
+            return {
+                key: placement.key,
+                position: validateCompositionPosition(placement, path)
+            };
+        }
+
+        function normalizeCompactCompositionPlacements(value, path) {
+            if (value === undefined) {
+                return undefined;
+            }
+
+            assertPlainObject(value, path);
+
+            return Object.keys(value).map(function (key) {
+                const itemPath = path + "." + key;
+                const position = value[key];
+
+                if (Array.isArray(position)) {
+                    if (position.length !== 2) {
+                        dataError(itemPath, "expected [x, y]");
+                    }
+
+                    return {
+                        key: key,
+                        x: position[0],
+                        y: position[1]
+                    };
+                }
+
+                if (isPlainObject(position)) {
+                    return {
+                        key: key,
+                        position: position
+                    };
+                }
+
+                dataError(itemPath, "expected [x, y] or a position object");
+            });
+        }
+
+        function validateComposition(composition, path) {
+            assertPlainObject(composition, path);
+            assertAllowedKeys(composition, path, [
+                "schema_version",
+                "source_hash",
+                "hash",
+                "python_state_version",
+                "placements",
+                "v",
+                "h",
+                "u",
+                "p"
+            ]);
+
+            const schemaVersion = composition.schema_version === undefined && composition.v === undefined
+                ? COMPOSITION_SCHEMA_VERSION
+                : composition.schema_version !== undefined
+                    ? composition.schema_version
+                    : composition.v;
+
+            if (schemaVersion !== COMPOSITION_SCHEMA_VERSION) {
+                dataError(path + ".schema_version", "unsupported composition schema version " + schemaVersion);
+            }
+
+            const sourceHash = composition.source_hash || composition.hash || composition.h;
+            const placements = composition.placements !== undefined
+                ? composition.placements
+                : normalizeCompactCompositionPlacements(composition.p, path + ".p");
+
+            assertString(sourceHash, path + ".source_hash");
+            assertArray(placements, path + ".placements");
+
+            return {
+                schema_version: schemaVersion,
+                source_hash: sourceHash,
+                python_state_version: composition.python_state_version === undefined && composition.u === undefined
+                    ? ""
+                    : String(composition.python_state_version !== undefined ? composition.python_state_version : composition.u),
+                placements: placements.map(function (placement, index) {
+                    return validateCompositionPlacement(placement, path + ".placements[" + index + "]");
+                })
+            };
+        }
+
+        function validateCompositionInput(value, path) {
+            return validateComposition(getCompositionPayload(value), path);
+        }
+
         function validateState(rawState) {
             assertPlainObject(rawState, "root");
-            assertAllowedKeys(rawState, "root", ["frames", "objects"]);
-
-            if (rawState.frames === undefined) {
-                dataError("root.frames", "expected frames");
-            }
+            assertAllowedKeys(rawState, "root", ["frames", "objects", "composition"]);
 
             if (rawState.objects === undefined) {
                 dataError("root.objects", "expected objects");
             }
 
-            const frameEntries = validateEntries(rawState.frames, "frames");
+            const frameEntries = rawState.frames === undefined
+                ? []
+                : validateEntries(rawState.frames, "frames");
             const objectEntries = validateEntries(rawState.objects, "objects");
             const seenFrameIds = new Set();
             const seenIds = new Set();
@@ -938,14 +1309,63 @@
             });
 
             objects.forEach(function (object) {
-                object.collectionItems.forEach(function (item) {
-                    if (!seenIds.has(item.target)) {
-                        dataError("objects." + object.id + ".value[" + item.label + "]", "unknown object " + item.target);
+                getObjectReferences(object).forEach(function (reference) {
+                    if (!seenIds.has(reference.target)) {
+                        dataError("objects." + object.id + ".value[" + reference.label + "]", "unknown object " + reference.target);
                     }
                 });
             });
 
-            return { frames: frames, objects: objects };
+            return {
+                frames: frames,
+                objects: objects,
+                composition: rawState.composition === undefined
+                    ? null
+                    : validateCompositionInput(rawState.composition, "composition")
+            };
+        }
+
+        function canonicalize(value) {
+            if (Array.isArray(value)) {
+                return value.map(canonicalize);
+            }
+
+            if (isPlainObject(value)) {
+                return Object.keys(value).sort().reduce(function (result, key) {
+                    result[key] = canonicalize(value[key]);
+                    return result;
+                }, {});
+            }
+
+            return value;
+        }
+
+        function canonicalJson(value) {
+            return JSON.stringify(canonicalize(value));
+        }
+
+        function hashString(value) {
+            let h1 = 0xdeadbeef ^ value.length;
+            let h2 = 0x41c6ce57 ^ value.length;
+
+            for (let index = 0; index < value.length; index += 1) {
+                const ch = value.charCodeAt(index);
+                h1 = Math.imul(h1 ^ ch, 2654435761);
+                h2 = Math.imul(h2 ^ ch, 1597334677);
+            }
+
+            h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+            h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+            return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+        }
+
+        function getCompositionSourceHash(state) {
+            return "ps1-" + hashString(canonicalJson({
+                python_state_version: PYTHON_STATE_UI_VERSION,
+                frames: state.frames,
+                objects: state.objects
+            }));
         }
 
         function textElement(tagName, className, text) {
@@ -953,6 +1373,18 @@
             element.className = className;
             element.textContent = text;
             return element;
+        }
+
+        function setCompositionStatus(message) {
+            compositionStatusText.textContent = message;
+            compositionStatus.hidden = false;
+            compositionStatus.title = message;
+        }
+
+        function clearCompositionStatus() {
+            compositionStatusText.textContent = "";
+            compositionStatus.title = "";
+            compositionStatus.hidden = true;
         }
 
         function renderError(message) {
@@ -963,15 +1395,20 @@
             nodes.appendChild(errorBox);
 
             fullscreenButton.disabled = true;
+            resetButton.disabled = true;
+            exportCompositionButton.disabled = true;
+            importCompositionButton.disabled = true;
             stage.style.height = LAYOUT.minHeight + "px";
         }
 
         function renderReference(reference, options) {
-            const row = document.createElement("li");
+            const row = document.createElement(options && options.inline ? "span" : "li");
             const isCollectionItem = options && options.collectionItem;
+            const isDictItem = options && options.dictItem;
 
             row.className = "python-state-shortcode__reference"
-                + (isCollectionItem ? " python-state-shortcode__reference--collection-item" : "");
+                + (isCollectionItem ? " python-state-shortcode__reference--collection-item" : "")
+                + (isDictItem ? " python-state-shortcode__reference--dict-item" : "");
             row.dataset.pythonStateTarget = reference.target;
 
             const label = textElement("span", "python-state-shortcode__reference-label", reference.label);
@@ -984,12 +1421,34 @@
             return row;
         }
 
+        function renderDictPair(pair) {
+            const row = document.createElement("li");
+
+            row.className = "python-state-shortcode__dict-pair";
+            row.appendChild(renderReference(pair.key, {
+                collectionItem: true,
+                dictItem: true,
+                inline: true
+            }));
+            row.appendChild(textElement("span", "python-state-shortcode__dict-separator", ":"));
+            row.appendChild(renderReference(pair.value, {
+                collectionItem: true,
+                dictItem: true,
+                inline: true
+            }));
+
+            return row;
+        }
+
         function renderFrame(frame) {
             const box = document.createElement("section");
             box.className = "python-state-shortcode__box python-state-shortcode__frame";
             box.dataset.pythonStateNodeId = frame.id;
+            box.dataset.pythonStateCompositionKey = "frame:" + frame.id;
 
-            box.appendChild(textElement("div", "python-state-shortcode__frame-title", frame.name));
+            if (frame.name) {
+                box.appendChild(textElement("div", "python-state-shortcode__frame-title", frame.name));
+            }
 
             const list = document.createElement("ul");
             list.className = "python-state-shortcode__bindings";
@@ -1011,10 +1470,19 @@
 
             if (object.collectionItems.length) {
                 const collection = document.createElement("ul");
-                collection.className = "python-state-shortcode__collection";
+                const isDict = object.collectionKind === "dict";
+                collection.className = "python-state-shortcode__collection"
+                    + (isDict ? " python-state-shortcode__collection--dict" : "");
 
                 object.collectionItems.forEach(function (item) {
-                    collection.appendChild(renderReference(item, { collectionItem: true }));
+                    if (isDict) {
+                        collection.appendChild(renderDictPair(item));
+                        return;
+                    }
+
+                    collection.appendChild(renderReference(item, {
+                        collectionItem: true
+                    }));
                 });
 
                 content.appendChild(collection);
@@ -1040,6 +1508,7 @@
             const missingClass = object.missing ? " python-state-shortcode__object--missing" : "";
             box.className = "python-state-shortcode__box python-state-shortcode__object" + missingClass;
             box.dataset.pythonStateNodeId = object.id;
+            box.dataset.pythonStateCompositionKey = "object:" + object.id;
             renderObjectContent(object, box);
             return box;
         }
@@ -1104,6 +1573,213 @@
             });
         }
 
+        function captureNodeStagePositions(nodeElements) {
+            const positions = new Map();
+
+            nodeElements.forEach(function (element) {
+                positions.set(element, {
+                    left: parseFloat(element.style.left) || 0,
+                    top: parseFloat(element.style.top) || 0
+                });
+            });
+
+            return positions;
+        }
+
+        function applyNodeStagePositions(positions) {
+            if (!positions) {
+                return;
+            }
+
+            positions.forEach(function (position, element) {
+                setNodePosition(element, position.left, position.top);
+            });
+        }
+
+        function getElementCompositionKey(element) {
+            return element.dataset.pythonStateCompositionKey || "";
+        }
+
+        function getElementsByCompositionKey(nodeElements) {
+            const elementsByKey = new Map();
+
+            nodeElements.forEach(function (element) {
+                const key = getElementCompositionKey(element);
+
+                if (key) {
+                    elementsByKey.set(key, element);
+                }
+            });
+
+            return elementsByKey;
+        }
+
+        function buildComposition(state, nodeElements) {
+            const placements = {};
+
+            nodeElements.forEach(function (element) {
+                const key = getElementCompositionKey(element);
+
+                if (!key) {
+                    return;
+                }
+
+                placements[key] = [
+                    Math.round((parseFloat(element.style.left) || 0) * 100) / 100,
+                    Math.round((parseFloat(element.style.top) || 0) * 100) / 100
+                ];
+            });
+
+            return {
+                composition: {
+                    v: COMPOSITION_SCHEMA_VERSION,
+                    h: getCompositionSourceHash(state),
+                    u: PYTHON_STATE_UI_VERSION,
+                    p: placements
+                }
+            };
+        }
+
+        function getCompositionPayload(value) {
+            const parsed = typeof value === "string"
+                ? parseCompositionText(value)
+                : value;
+
+            if (isPlainObject(parsed) && parsed.composition !== undefined) {
+                return parsed.composition;
+            }
+
+            return parsed;
+        }
+
+        function parseCompositionText(value) {
+            const raw = String(value || "").trim();
+
+            if (!raw) {
+                dataError("composition", "expected composition data");
+            }
+
+            return raw[0] === "{" || raw[0] === "["
+                ? JSON.parse(raw)
+                : parseYamlSubset(raw);
+        }
+
+        function applyComposition(composition, state, nodeElements, objectElements) {
+            const elementsByKey = getElementsByCompositionKey(nodeElements);
+            const currentHash = getCompositionSourceHash(state);
+            const hashMatches = composition.source_hash === currentHash;
+            const versionMatches = !composition.python_state_version
+                || composition.python_state_version === PYTHON_STATE_UI_VERSION;
+            const appliedKeys = new Set();
+            let applied = 0;
+            let missing = 0;
+            let duplicate = 0;
+
+            composition.placements.forEach(function (placement) {
+                const element = elementsByKey.get(placement.key);
+
+                if (appliedKeys.has(placement.key)) {
+                    duplicate += 1;
+                }
+
+                if (!element) {
+                    missing += 1;
+                    return;
+                }
+
+                setNodePosition(element, placement.position.x, placement.position.y);
+                appliedKeys.add(placement.key);
+                applied += 1;
+            });
+
+            if (!applied) {
+                return {
+                    applied: applied,
+                    total: composition.placements.length,
+                    missing: missing,
+                    duplicate: duplicate,
+                    hashMatches: hashMatches,
+                    versionMatches: versionMatches,
+                    message: "Composition import failed: no matching diagram elements found."
+                };
+            }
+
+            if (isFullscreen() && fullpageSession) {
+                fullpageSession.fullpageNodePositionsChanged = true;
+            }
+
+            updateStageWidthToFit(nodeElements);
+            updateStageHeight(nodeElements);
+            drawArrows(objectElements);
+
+            if (!hashMatches) {
+                return {
+                    applied: applied,
+                    total: composition.placements.length,
+                    missing: missing,
+                    duplicate: duplicate,
+                    hashMatches: hashMatches,
+                    versionMatches: versionMatches,
+                    message: "Partial composition import: applied " + applied + " of " + composition.placements.length + " placements. The composition may be outdated."
+                };
+            }
+
+            if (!versionMatches) {
+                return {
+                    applied: applied,
+                    total: composition.placements.length,
+                    missing: missing,
+                    duplicate: duplicate,
+                    hashMatches: hashMatches,
+                    versionMatches: versionMatches,
+                    message: "Composition imported with warnings: UI version differs from the current diagram renderer."
+                };
+            }
+
+            if (missing || duplicate || appliedKeys.size < nodeElements.length || composition.placements.length !== nodeElements.length) {
+                return {
+                    applied: applied,
+                    total: composition.placements.length,
+                    missing: missing,
+                    duplicate: duplicate,
+                    hashMatches: hashMatches,
+                    versionMatches: versionMatches,
+                    message: "Partial composition import: applied " + applied + " of " + composition.placements.length + " placements. Some elements were not found."
+                };
+            }
+
+            return {
+                applied: applied,
+                total: composition.placements.length,
+                missing: missing,
+                duplicate: duplicate,
+                hashMatches: hashMatches,
+                versionMatches: versionMatches,
+                message: "Composition imported."
+            };
+        }
+
+        function importCompositionPayload(value, state, nodeElements, objectElements) {
+            const composition = validateComposition(getCompositionPayload(value), "composition");
+            return applyComposition(composition, state, nodeElements, objectElements);
+        }
+
+        function copyTextToClipboard(text) {
+            if (!navigator.clipboard || !navigator.clipboard.writeText) {
+                return Promise.reject(new Error("Clipboard write is not available."));
+            }
+
+            return navigator.clipboard.writeText(text);
+        }
+
+        function readTextFromClipboard() {
+            if (!navigator.clipboard || !navigator.clipboard.readText) {
+                return Promise.reject(new Error("Clipboard read is not available."));
+            }
+
+            return navigator.clipboard.readText();
+        }
+
         function clampNodePosition(element) {
             const left = parseFloat(element.style.left) || 0;
             const top = parseFloat(element.style.top) || 0;
@@ -1117,16 +1793,72 @@
             );
         }
 
-        function fitNodeIntoCompactStage(element) {
-            const left = parseFloat(element.style.left) || 0;
-            const top = parseFloat(element.style.top) || 0;
-            const maxX = Math.max(0, stage.clientWidth - element.offsetWidth);
+        function getNodeBounds(nodeElements) {
+            return nodeElements.reduce(function (bounds, element) {
+                const left = parseFloat(element.style.left) || 0;
+                const top = parseFloat(element.style.top) || 0;
+                const right = left + element.offsetWidth;
+                const bottom = top + element.offsetHeight;
 
-            setNodePosition(
-                element,
-                clamp(left, 0, maxX),
-                Math.max(0, top)
-            );
+                return {
+                    left: Math.min(bounds.left, left),
+                    top: Math.min(bounds.top, top),
+                    right: Math.max(bounds.right, right),
+                    bottom: Math.max(bounds.bottom, bottom)
+                };
+            }, {
+                left: Infinity,
+                top: Infinity,
+                right: -Infinity,
+                bottom: -Infinity
+            });
+        }
+
+        function offsetNodeGroup(nodeElements, offsetX, offsetY) {
+            if (!offsetX && !offsetY) {
+                return;
+            }
+
+            nodeElements.forEach(function (element) {
+                const left = parseFloat(element.style.left) || 0;
+                const top = parseFloat(element.style.top) || 0;
+
+                setNodePosition(element, left + offsetX, top + offsetY);
+            });
+        }
+
+        function getCompactTargetLeft(preferredLeft) {
+            return Number.isFinite(preferredLeft) ? preferredLeft : LAYOUT.outerGap;
+        }
+
+        function getCompactTargetTop(bounds) {
+            const contentHeight = bounds.bottom - bounds.top;
+            const stageHeight = Math.max(LAYOUT.minHeight, contentHeight + LAYOUT.outerGap * 2);
+
+            return Math.max(LAYOUT.outerGap, Math.round((stageHeight - contentHeight) / 2));
+        }
+
+        function normalizeCompactNodeGroup(nodeElements, compactBounds) {
+            if (!nodeElements.length) {
+                return {
+                    x: 0,
+                    y: 0
+                };
+            }
+
+            const bounds = getNodeBounds(nodeElements);
+            const targetLeft = getCompactTargetLeft(compactBounds && compactBounds.left);
+            const targetTop = getCompactTargetTop(bounds);
+            const offsetX = targetLeft - bounds.left;
+            const offsetY = targetTop - bounds.top;
+
+            offsetNodeGroup(nodeElements, offsetX, offsetY);
+            updateStageWidthToFit(nodeElements);
+
+            return {
+                x: offsetX,
+                y: offsetY
+            };
         }
 
         function computeObjectLevels(state) {
@@ -1136,7 +1868,7 @@
 
             state.objects.forEach(function (object) {
                 objectsById.set(object.id, object);
-                referencesByObject.set(object.id, object.collectionItems.map(function (reference) {
+                referencesByObject.set(object.id, getObjectReferences(object).map(function (reference) {
                     return reference.target;
                 }));
             });
@@ -1177,7 +1909,7 @@
                 state.objects.forEach(function (object) {
                     const sourceLevel = levels.get(object.id) || 1;
 
-                    object.collectionItems.forEach(function (reference) {
+                    getObjectReferences(object).forEach(function (reference) {
                         if (reference.target === object.id || reaches(reference.target, object.id, new Set())) {
                             return;
                         }
@@ -1256,9 +1988,9 @@
                     return;
                 }
 
-                const referenceCount = Math.max(1, object.collectionItems.length + 1);
+                const referenceCount = Math.max(1, getCollectionItemReferenceCount(object.collectionItems) + 1);
 
-                object.collectionItems.forEach(function (reference, referenceIndex) {
+                forEachCollectionReference(object.collectionItems, function (reference, referenceIndex) {
                     addReferenceScore(
                         stats,
                         reference.target,
@@ -1331,7 +2063,7 @@
             const referencesByObject = new Map();
 
             state.objects.forEach(function (object) {
-                referencesByObject.set(object.id, object.collectionItems.map(function (reference) {
+                referencesByObject.set(object.id, getObjectReferences(object).map(function (reference) {
                     return reference.target;
                 }));
             });
@@ -1501,7 +2233,7 @@
             state.objects.forEach(function (object) {
                 const reachable = collectReachableObjects([object.id], referencesByObject);
 
-                object.collectionItems.forEach(function (reference) {
+                getObjectReferences(object).forEach(function (reference) {
                     edges.push({
                         sourceElement: objectElements.get(object.id),
                         sourceId: object.id,
@@ -1564,9 +2296,9 @@
 
         function positionDefault(state, frameElements, objectElements) {
             const objectLevels = computeObjectLevels(state);
-            const columns = [frameElements].concat(
-                buildOrderedObjectColumns(state, objectElements, objectLevels)
-            );
+            const hasFrames = frameElements.length > 0;
+            const objectColumns = buildOrderedObjectColumns(state, objectElements, objectLevels);
+            const columns = hasFrames ? [frameElements].concat(objectColumns) : objectColumns;
             const columnWidths = columns.map(function (column) {
                 if (!column || !column.length) {
                     return 0;
@@ -1585,8 +2317,7 @@
                     return height + element.offsetHeight;
                 }, 0) + LAYOUT.boxGap * (column.length - 1);
             });
-            const objectColumns = columns.slice(1);
-            const objectColumnWidths = columnWidths.slice(1);
+            const objectColumnWidths = hasFrames ? columnWidths.slice(1) : columnWidths;
             const regularColumnGap = Math.max(44, Math.round(getStageWidth() * 0.07));
             const objectGaps = objectColumns.slice(0, -1).map(function () {
                 return regularColumnGap;
@@ -1599,11 +2330,10 @@
             const contentHeight = columnHeights.reduce(function (height, columnHeight) {
                 return Math.max(height, columnHeight);
             }, 0);
-            const frameContentWidth = columnWidths[0] || 0;
-            const requiredUsableWidth = Math.max(
-                frameContentWidth * 3,
-                objectContentWidth * 1.5
-            );
+            const frameContentWidth = hasFrames ? columnWidths[0] || 0 : 0;
+            const requiredUsableWidth = hasFrames
+                ? Math.max(frameContentWidth * 3, objectContentWidth * 1.5)
+                : objectContentWidth;
             const stageWidth = Math.max(
                 getStageWidth(),
                 Math.ceil(requiredUsableWidth + LAYOUT.outerGap * 2)
@@ -1612,14 +2342,14 @@
             const usableWidth = stageWidth - LAYOUT.outerGap * 2;
             const frameAreaLeft = LAYOUT.outerGap;
             const frameAreaWidth = usableWidth / 3;
-            const objectAreaLeft = frameAreaLeft + frameAreaWidth;
-            const objectAreaWidth = usableWidth * 2 / 3;
+            const objectAreaLeft = hasFrames ? frameAreaLeft + frameAreaWidth : LAYOUT.outerGap;
+            const objectAreaWidth = hasFrames ? usableWidth * 2 / 3 : usableWidth;
             const yStart = Math.max(LAYOUT.outerGap, Math.round((stageHeight - contentHeight) / 2));
 
             updateStageWidth(stageWidth);
             stage.style.height = stageHeight + "px";
 
-            if (columns[0] && columns[0].length) {
+            if (hasFrames) {
                 let frameY = yStart;
                 const frameX = Math.round(
                     frameAreaLeft + Math.max(0, (frameAreaWidth - frameContentWidth) / 2)
@@ -1982,7 +2712,7 @@
         }
 
         function isFullscreen() {
-            return root.classList.contains("python-state-shortcode--fullscreen");
+            return root.classList.contains(FULLPAGE_MODE.className);
         }
 
         function isTransparentColor(value) {
@@ -2004,25 +2734,187 @@
         }
 
         function updateFullpageMetrics() {
-            const nav = document.querySelector("nav");
-            const navRect = nav ? nav.getBoundingClientRect() : null;
-            const top = navRect ? Math.max(0, Math.round(navRect.bottom)) : 0;
-
-            root.style.setProperty("--python-state-fullpage-top", top + "px");
             root.style.setProperty("--python-state-fullpage-bg", getPageBackgroundColor());
         }
 
-        function setPageScrollLocked(locked) {
-            if (locked) {
-                savedDocumentOverflow = document.documentElement.style.overflow;
-                savedBodyOverflow = document.body.style.overflow;
-                document.documentElement.style.overflow = "hidden";
-                document.body.style.overflow = "hidden";
+        function readWindowScroll() {
+            return {
+                left: window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0,
+                top: window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
+            };
+        }
+
+        function restoreWindowScroll(position) {
+            if (!position) {
                 return;
             }
 
-            document.documentElement.style.overflow = savedDocumentOverflow;
-            document.body.style.overflow = savedBodyOverflow;
+            const savedScrollBehavior = document.documentElement.style.scrollBehavior;
+
+            document.documentElement.style.scrollBehavior = "auto";
+            window.scrollTo(position.left, position.top);
+            document.documentElement.style.scrollBehavior = savedScrollBehavior;
+        }
+
+        function offsetWindowScroll(offsetY) {
+            if (!offsetY) {
+                return;
+            }
+
+            const scroll = readWindowScroll();
+
+            restoreWindowScroll({
+                left: scroll.left,
+                top: scroll.top + offsetY
+            });
+        }
+
+        function captureExitPageScrollAnchor(session) {
+            if (!FULLPAGE_MODE.anchorPageScrollToDiagramOnExit || !session) {
+                return null;
+            }
+
+            const scroll = readWindowScroll();
+            const visualRect = root.getBoundingClientRect();
+            const flowRect = session.placeholder
+                ? session.placeholder.getBoundingClientRect()
+                : root.getBoundingClientRect();
+
+            return {
+                left: scroll.left,
+                top: scroll.top + flowRect.top - visualRect.top
+            };
+        }
+
+        function readViewportScroll() {
+            return {
+                left: viewport.scrollLeft,
+                top: viewport.scrollTop
+            };
+        }
+
+        function restoreViewportScroll(position) {
+            if (!position) {
+                return;
+            }
+
+            viewport.scrollLeft = position.left;
+            viewport.scrollTop = position.top;
+        }
+
+        function createFullpagePlaceholder() {
+            const placeholder = document.createElement("div");
+            const rect = root.getBoundingClientRect();
+            const style = window.getComputedStyle(root);
+
+            placeholder.className = FULLPAGE_MODE.placeholderClassName;
+            placeholder.setAttribute("aria-hidden", "true");
+            placeholder.style.boxSizing = "border-box";
+            placeholder.style.display = style.display === "inline" ? "block" : style.display;
+            placeholder.style.width = rect.width + "px";
+            placeholder.style.height = rect.height + "px";
+            placeholder.style.margin = style.margin;
+
+            root.parentNode.insertBefore(placeholder, root);
+
+            return placeholder;
+        }
+
+        function lockDocumentScroll(session) {
+            session.savedDocumentOverflow = document.documentElement.style.overflow;
+            session.savedBodyOverflow = document.body.style.overflow;
+            document.documentElement.style.overflow = "hidden";
+            document.body.style.overflow = "hidden";
+        }
+
+        function unlockDocumentScroll(session) {
+            document.documentElement.style.overflow = session.savedDocumentOverflow;
+            document.body.style.overflow = session.savedBodyOverflow;
+        }
+
+        function captureFullpageTransition(nodeElements) {
+            return {
+                nodeViewportPositions: FULLPAGE_MODE.preserveNodeViewportPositions
+                    ? captureNodeViewportPositions(nodeElements)
+                    : null,
+                viewportScroll: FULLPAGE_MODE.preserveViewportScroll
+                    ? readViewportScroll()
+                    : null
+            };
+        }
+
+        function applyFullpageTransition(transition) {
+            if (!transition) {
+                return;
+            }
+
+            if (transition.nodeViewportPositions) {
+                applyNodeViewportPositions(transition.nodeViewportPositions);
+            }
+
+            restoreViewportScroll(transition.viewportScroll);
+        }
+
+        function captureCompactLayout(nodeElements) {
+            return {
+                nodePositions: captureNodeStagePositions(nodeElements),
+                bounds: nodeElements.length ? getNodeBounds(nodeElements) : null,
+                viewportScroll: readViewportScroll()
+            };
+        }
+
+        function restoreCompactLayout(layout) {
+            if (!layout) {
+                return;
+            }
+
+            applyNodeStagePositions(layout.nodePositions);
+            restoreViewportScroll(layout.viewportScroll);
+        }
+
+        function beginFullpageSession(nodeElements) {
+            const compactLayout = captureCompactLayout(nodeElements);
+            const session = {
+                pageScroll: FULLPAGE_MODE.preservePageScroll ? readWindowScroll() : null,
+                compactLayout: compactLayout,
+                placeholder: createFullpagePlaceholder(),
+                savedDocumentOverflow: "",
+                savedBodyOverflow: "",
+                fullpageNodePositionsChanged: false
+            };
+
+            if (FULLPAGE_MODE.lockDocumentScroll) {
+                lockDocumentScroll(session);
+            }
+
+            return session;
+        }
+
+        function endFullpageSession(session, pageScrollAnchor) {
+            if (!session) {
+                return;
+            }
+
+            if (FULLPAGE_MODE.lockDocumentScroll) {
+                unlockDocumentScroll(session);
+            }
+
+            if (session.placeholder) {
+                session.placeholder.remove();
+            }
+
+            if (pageScrollAnchor) {
+                restoreWindowScroll(pageScrollAnchor);
+            } else if (FULLPAGE_MODE.preservePageScroll) {
+                restoreWindowScroll(session.pageScroll);
+            }
+        }
+
+        function updateFullscreenButton(enabled) {
+            fullscreenButton.setAttribute("aria-pressed", enabled ? "true" : "false");
+            fullscreenButton.textContent = enabled
+                ? FULLPAGE_MODE.expandedButtonText
+                : FULLPAGE_MODE.compactButtonText;
         }
 
         function refreshGeometry(allNodeElements, objectElements) {
@@ -2035,25 +2927,37 @@
                 return;
             }
 
-            const preTogglePositions = captureNodeViewportPositions(allNodeElements);
+            const transition = captureFullpageTransition(allNodeElements);
+            const session = enabled ? beginFullpageSession(allNodeElements) : fullpageSession;
+            const exitPageScrollAnchor = enabled ? null : captureExitPageScrollAnchor(session);
 
             if (enabled) {
                 updateFullpageMetrics();
             }
 
-            root.classList.toggle("python-state-shortcode--fullscreen", enabled);
-            fullscreenButton.setAttribute("aria-pressed", enabled ? "true" : "false");
-            fullscreenButton.textContent = enabled ? "Exit" : "Full page";
-            setPageScrollLocked(enabled);
+            root.classList.toggle(FULLPAGE_MODE.className, enabled);
+            updateFullscreenButton(enabled);
+
+            if (enabled) {
+                fullpageSession = session;
+                restoreWindowScroll(session.pageScroll);
+            } else {
+                endFullpageSession(session, exitPageScrollAnchor);
+                fullpageSession = null;
+            }
 
             window.requestAnimationFrame(function () {
                 if (enabled) {
-                    applyNodeViewportPositions(preTogglePositions);
+                    applyFullpageTransition(transition);
                     updateStageWidthToFit(allNodeElements);
                 } else {
                     resetStageWidthToViewport();
-                    applyNodeViewportPositions(preTogglePositions);
-                    allNodeElements.forEach(fitNodeIntoCompactStage);
+                    if (session && !session.fullpageNodePositionsChanged) {
+                        restoreCompactLayout(session.compactLayout);
+                    } else {
+                        applyFullpageTransition(transition);
+                    }
+                    updateStageWidthToFit(allNodeElements);
                 }
 
                 refreshGeometry(allNodeElements, objectElements);
@@ -2087,6 +2991,9 @@
                 const y = clamp(event.clientY - stageRect.top - offsetY, 0, maxY);
 
                 setNodePosition(element, x, y);
+                if (isFullscreen() && fullpageSession) {
+                    fullpageSession.fullpageNodePositionsChanged = true;
+                }
                 drawArrows(objectElements);
             });
 
@@ -2116,8 +3023,22 @@
             const allNodeElements = frameElements.concat(Array.from(objectElements.values()));
 
             positionDefault(state, frameElements, objectElements);
+            if (state.composition) {
+                const sourceCompositionResult = applyComposition(
+                    state.composition,
+                    state,
+                    allNodeElements,
+                    objectElements
+                );
+
+                if (sourceCompositionResult.message !== "Composition imported.") {
+                    setCompositionStatus(sourceCompositionResult.message);
+                }
+            }
+
             updateStageHeight(allNodeElements);
             drawArrows(objectElements);
+            const originalNodePositions = captureNodeStagePositions(allNodeElements);
 
             allNodeElements.forEach(function (element) {
                 makeDraggable(element, objectElements);
@@ -2125,6 +3046,41 @@
 
             fullscreenButton.addEventListener("click", function () {
                 setFullscreenMode(!isFullscreen(), allNodeElements, objectElements);
+            });
+
+            resetButton.addEventListener("click", function () {
+                applyNodeStagePositions(originalNodePositions);
+
+                if (isFullscreen() && fullpageSession) {
+                    fullpageSession.fullpageNodePositionsChanged = true;
+                }
+
+                updateStageWidthToFit(allNodeElements);
+                refreshGeometry(allNodeElements, objectElements);
+                setCompositionStatus("Composition reset.");
+            });
+
+            exportCompositionButton.addEventListener("click", function () {
+                const text = JSON.stringify(buildComposition(state, allNodeElements));
+
+                copyTextToClipboard(text).then(function () {
+                    setCompositionStatus("Composition copied.");
+                }).catch(function (error) {
+                    setCompositionStatus("Composition export failed: " + error.message);
+                });
+            });
+
+            importCompositionButton.addEventListener("click", function () {
+                readTextFromClipboard().then(function (text) {
+                    try {
+                        const result = importCompositionPayload(text, state, allNodeElements, objectElements);
+                        setCompositionStatus(result.message);
+                    } catch (error) {
+                        setCompositionStatus("Composition import failed: " + error.message);
+                    }
+                }).catch(function (error) {
+                    setCompositionStatus("Composition import failed: " + error.message);
+                });
             });
 
             document.addEventListener("keydown", function (event) {
@@ -2151,6 +3107,8 @@
                 refreshGeometry(allNodeElements, objectElements);
             });
         }
+
+        compositionStatusClose.addEventListener("click", clearCompositionStatus);
 
         const parsed = parseState();
 

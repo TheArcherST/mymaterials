@@ -34,6 +34,7 @@ mathjax = true
 mathjax_dollar_inline_enable = true
 repo_view = true
 repo_url = "https://github.com/TheArcherST/mymaterials/tree/master/content/"
+test_backend_url = "https://"
 
 menu = [
   { name = "/articles", url = "/articles", weight = 1 },
@@ -52,3 +53,5 @@ stylesheets = ["custom.css"]
 sort_by = "page_count"
 reverse = true
 
+[extra.ui_version_control]
+python_state = "2"

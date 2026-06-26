@@ -410,4 +410,46 @@ objects:
     type: list
     value:
       - object: lst_1
+composition: '{"composition":{"v":1,"h":"ps1-x2kidb3tx6","u":"1","p":{"frame:global":[296,384.37],"object:lst_1":[634,444.37],"object:lst_2":[543,322.37],"object:a":[793,281.37],"object:one":[811,421.37],"object:lst_3":[449,466.37]}}}'
+{% end %}
+
+
+### Пятое состояние
+
+{% python_state() %}
+frames:
+  global:
+    bindings:
+      - name: lst_1
+        object: lst_1
+      - name: dct_2
+        object: dct_2
+objects:
+  lst_1:
+    type: list
+    value:
+      - object: a
+      - object: one
+  dct_2:
+    type: dict
+    value:
+      - key:
+          object: a
+        value:
+          object: one
+      - key:
+          object: a
+        value:
+          object: one
+
+  a:
+    type: str
+    value: Hello
+  one:
+    type: int
+    value: 1
+  lst_3:
+    type: list
+    value:
+      - object: lst_1
 {% end %}
