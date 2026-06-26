@@ -54,4 +54,4 @@ sort_by = "page_count"
 reverse = true
 
 [extra.ui_version_control]
-python_state = "2"
+python_state = "1"

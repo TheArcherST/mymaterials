@@ -1,0 +1,19 @@
+{% set test_answer_label = label | default(value="Ответ") %}
+{% set test_answer_name = name | default(value=test_answer_label | slugify) %}
+{% set test_answer_slug = test_answer_name | slugify %}
+{% set test_answer_id = id | default(value="test-answer-" ~ test_answer_slug) %}
+{% set test_answer_placeholder = placeholder | default(value="") %}
+{% set test_answer_value = value | default(value="") %}
+{% set test_answer_required = required | default(value=false) %}
+
+<div class="test-attempt-field">
+    <label class="test-attempt-field__label" for="{{ test_answer_id | escape }}">{{ test_answer_label | safe }}</label>
+    <textarea
+        class="test-attempt-field__textarea"
+        id="{{ test_answer_id | escape }}"
+        name="{{ test_answer_name | escape }}"
+        data-test-attempt-answer
+        data-test-attempt-label="{{ test_answer_label | striptags | escape }}"
+        placeholder="{{ test_answer_placeholder | escape }}"
+        {% if test_answer_required %}required{% endif %}>{{ test_answer_value | escape }}</textarea>
+</div>

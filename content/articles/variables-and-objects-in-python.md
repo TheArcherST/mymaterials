@@ -374,6 +374,7 @@ objects:
   one:
     type: int
     value: 1
+composition: '{"composition":{"v":1,"h":"ps1-buzkxta63j","u":"1","p":{"frame:global":[118,46],"object:items":[447,46],"object:a":[637,204],"object:a_copy":[637,125],"object:one":[639,24]}}}'
 {% end %}
 
 ### Четвёртое состояние
@@ -390,12 +391,12 @@ frames:
         object: lst_3
 
 objects:
-  lst_1:
+  lst_2:
     type: list
     value:
       - object: a
       - object: one
-  lst_2:
+  lst_1:
     type: list
     value:
       - object: a
@@ -409,8 +410,8 @@ objects:
   lst_3:
     type: list
     value:
-      - object: lst_1
-composition: '{"composition":{"v":1,"h":"ps1-x2kidb3tx6","u":"1","p":{"frame:global":[296,384.37],"object:lst_1":[634,444.37],"object:lst_2":[543,322.37],"object:a":[793,281.37],"object:one":[811,421.37],"object:lst_3":[449,466.37]}}}'
+      - object: lst_2
+composition: '{"composition":{"v":1,"h":"ps1-1yk3jwui8i5","u":"1","p":{"frame:global":[116,25],"object:lst_2":[468,172],"object:lst_1":[310,24],"object:a":[652,40],"object:one":[653,144],"object:lst_3":[310,171]}}}'
 {% end %}
 
 
@@ -420,36 +421,60 @@ composition: '{"composition":{"v":1,"h":"ps1-x2kidb3tx6","u":"1","p":{"frame:glo
 frames:
   global:
     bindings:
-      - name: lst_1
-        object: lst_1
-      - name: dct_2
-        object: dct_2
+      - name: data
+        object: data
+      - name: user
+        object: user
+      - name: user_copy
+        object: user_copy
 objects:
-  lst_1:
-    type: list
-    value:
-      - object: a
-      - object: one
-  dct_2:
+  data:
     type: dict
     value:
       - key:
-          object: a
+          object: key_users
+        value:
+          object: users
+  users:
+    type: list
+    value:
+      - object: user
+  user:
+    type: dict
+    value:
+      - key:
+          object: key_id
         value:
           object: one
       - key:
-          object: a
+          object: key_name
+        value:
+          object: test
+  user_copy:
+    type: dict
+    value:
+      - key:
+          object: key_id
         value:
           object: one
-
-  a:
+      - key:
+          object: key_name
+        value:
+          object: test
+  key_users:
     type: str
-    value: Hello
+    value: users
+  key_id:
+    type: str
+    value: id
+  key_name:
+    type: str
+    value: name
   one:
     type: int
     value: 1
-  lst_3:
-    type: list
-    value:
-      - object: lst_1
+  test:
+    type: str
+    value: Test
+composition: '{"composition":{"v":1,"h":"ps1-1b6m1edqc69","u":"1","p":{"frame:global":[84,174],"object:data":[378,24],"object:users":[453,144],"object:user":[366,263.9],"object:user_copy":[365,407],"object:key_users":[354,145],"object:key_id":[670,224],"object:key_name":[671,398],"object:one":[670,298],"object:test":[671,474]}}}'
 {% end %}

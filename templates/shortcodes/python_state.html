@@ -87,10 +87,11 @@
     top: 0;
     right: calc(100% + 0.35rem);
     bottom: 0;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     box-sizing: border-box;
-    width: 19em;
+    width: max-content;
+    max-width: min(34em, calc(100vw - 2rem));
     min-height: calc(1em + 0.6em + 2px);
     border: 1px solid var(--python-state-border-color);
     border-radius: 2px;
@@ -108,6 +109,7 @@
 .python-state-shortcode__composition-status-text {
     flex: 1 1 auto;
     min-width: 0;
+    max-width: 100%;
     padding: 0.3em 0.55em;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -158,6 +160,26 @@
     inset: 0;
     z-index: 2;
     pointer-events: none;
+}
+
+.python-state-shortcode__canvas-bounds {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+    box-sizing: border-box;
+    display: none;
+    border: 0;
+    background:
+        repeating-linear-gradient(to right, var(--python-state-border-color) 0 12px, transparent 12px 24px) top left / 100% 1px no-repeat,
+        repeating-linear-gradient(to right, var(--python-state-border-color) 0 12px, transparent 12px 24px) bottom left / 100% 1px no-repeat,
+        repeating-linear-gradient(to bottom, var(--python-state-border-color) 0 12px, transparent 12px 24px) top left / 1px 100% no-repeat,
+        repeating-linear-gradient(to bottom, var(--python-state-border-color) 0 12px, transparent 12px 24px) top right / 1px 100% no-repeat;
+    pointer-events: none;
+}
+
+.python-state-shortcode--fullscreen .python-state-shortcode__canvas-bounds {
+    display: block;
 }
 
 .python-state-shortcode__box {
@@ -464,6 +486,8 @@
 
 .python-state-shortcode--fullscreen .python-state-shortcode__stage {
     min-height: 100%;
+    margin-left: var(--python-state-fullpage-stage-offset-left, 0);
+    margin-top: var(--python-state-fullpage-stage-offset-top, 0);
 }
 </style>
 
@@ -488,6 +512,7 @@
     <div class="python-state-shortcode__viewport">
         <div class="python-state-shortcode__stage" data-python-state-stage aria-label="{{ python_state_title | striptags }}">
             <svg class="python-state-shortcode__arrows" data-python-state-arrows aria-hidden="true"></svg>
+            <div class="python-state-shortcode__canvas-bounds" data-python-state-canvas-bounds aria-hidden="true"></div>
             <div class="python-state-shortcode__nodes" data-python-state-nodes></div>
         </div>
     </div>
@@ -504,6 +529,7 @@
         const stage = root.querySelector("[data-python-state-stage]");
         const nodes = root.querySelector("[data-python-state-nodes]");
         const arrowsSvg = root.querySelector("[data-python-state-arrows]");
+        const canvasBoundsElement = root.querySelector("[data-python-state-canvas-bounds]");
         const dataNode = root.querySelector("[data-python-state-data]");
         const fullscreenButton = root.querySelector("[data-python-state-fullscreen-button]");
         const resetButton = root.querySelector("[data-python-state-reset-button]");
@@ -513,6 +539,10 @@
         const compositionStatusText = root.querySelector("[data-python-state-composition-status-text]");
         const compositionStatusClose = root.querySelector("[data-python-state-composition-status-close]");
         let fullpageSession = null;
+        const canvasOriginDebt = {
+            x: 0,
+            y: 0
+        };
         const PYTHON_STATE_UI_VERSION = "{{ python_state_ui_version }}";
         const COMPOSITION_SCHEMA_VERSION = 1;
 
@@ -520,6 +550,7 @@
             minWidth: 560,
             minHeight: 240,
             outerGap: 18,
+            canvasPadding: 24,
             boxGap: 14,
             arrowGap: 7,
             cornerGap: 10,
@@ -533,9 +564,6 @@
             expandedButtonText: "Exit",
             compactButtonText: "Full page",
             preservePageScroll: true,
-            anchorPageScrollToDiagramOnExit: true,
-            preserveViewportScroll: true,
-            preserveNodeViewportPositions: false,
             lockDocumentScroll: true
         };
 
@@ -1538,39 +1566,9 @@
             stage.style.width = Math.max(getStageWidth(), width || 0) + "px";
         }
 
-        function resetStageWidthToViewport() {
-            stage.style.width = getStageWidth() + "px";
-        }
-
         function setNodePosition(element, left, top) {
             element.style.left = left + "px";
             element.style.top = top + "px";
-        }
-
-        function captureNodeViewportPositions(nodeElements) {
-            const positions = new Map();
-
-            nodeElements.forEach(function (element) {
-                const rect = element.getBoundingClientRect();
-                positions.set(element, {
-                    left: rect.left,
-                    top: rect.top
-                });
-            });
-
-            return positions;
-        }
-
-        function applyNodeViewportPositions(positions) {
-            const stageRect = stage.getBoundingClientRect();
-
-            positions.forEach(function (position, element) {
-                setNodePosition(
-                    element,
-                    position.left - stageRect.left,
-                    position.top - stageRect.top
-                );
-            });
         }
 
         function captureNodeStagePositions(nodeElements) {
@@ -1594,6 +1592,95 @@
             positions.forEach(function (position, element) {
                 setNodePosition(element, position.left, position.top);
             });
+        }
+
+        function getCanvasBounds(nodeElements) {
+            if (!nodeElements.length) {
+                return {
+                    width: LAYOUT.minWidth,
+                    height: LAYOUT.minHeight
+                };
+            }
+
+            const bounds = getNodeBounds(nodeElements);
+
+            return {
+                width: Math.max(LAYOUT.minWidth, Math.ceil(bounds.right + LAYOUT.canvasPadding)),
+                height: Math.max(LAYOUT.minHeight, Math.ceil(bounds.bottom + LAYOUT.canvasPadding))
+            };
+        }
+
+        function updateCanvasBoundsOverlay(canvasBounds) {
+            canvasBoundsElement.style.width = canvasBounds.width + "px";
+            canvasBoundsElement.style.height = canvasBounds.height + "px";
+        }
+
+        function resetCanvasOriginDebt() {
+            canvasOriginDebt.x = 0;
+            canvasOriginDebt.y = 0;
+        }
+
+        function addCanvasOriginDebt(x, y) {
+            canvasOriginDebt.x += x;
+            canvasOriginDebt.y += y;
+        }
+
+        function consumeCanvasOriginDebt(axis, amount) {
+            const consumed = Math.min(Math.max(0, amount), canvasOriginDebt[axis]);
+
+            canvasOriginDebt[axis] -= consumed;
+            return consumed;
+        }
+
+        function normalizeCanvasOrigin(nodeElements, compensateViewportScroll) {
+            if (!nodeElements.length) {
+                return {
+                    x: 0,
+                    y: 0
+                };
+            }
+
+            const bounds = getNodeBounds(nodeElements);
+            let shiftX = Math.max(0, LAYOUT.canvasPadding - bounds.left);
+            let shiftY = Math.max(0, LAYOUT.canvasPadding - bounds.top);
+
+            if (!shiftX && bounds.left > LAYOUT.canvasPadding && canvasOriginDebt.x) {
+                shiftX = -consumeCanvasOriginDebt("x", bounds.left - LAYOUT.canvasPadding);
+            }
+
+            if (!shiftY && bounds.top > LAYOUT.canvasPadding && canvasOriginDebt.y) {
+                shiftY = -consumeCanvasOriginDebt("y", bounds.top - LAYOUT.canvasPadding);
+            }
+
+            if (shiftX || shiftY) {
+                offsetNodeGroup(nodeElements, shiftX, shiftY);
+
+                if (compensateViewportScroll) {
+                    viewport.scrollLeft = Math.max(0, viewport.scrollLeft + shiftX);
+                    viewport.scrollTop = Math.max(0, viewport.scrollTop + shiftY);
+                }
+            }
+
+            return {
+                x: shiftX,
+                y: shiftY
+            };
+        }
+
+        function updateCanvasMetrics(nodeElements) {
+            const normalization = normalizeCanvasOrigin(nodeElements, false);
+
+            const canvasBounds = getCanvasBounds(nodeElements);
+            const width = Math.max(canvasBounds.width, getStageWidth());
+            const viewportHeight = isFullscreen() ? viewport.clientHeight : 0;
+            const height = Math.max(canvasBounds.height, LAYOUT.minHeight, viewportHeight);
+
+            stage.style.width = width + "px";
+            stage.style.height = height + "px";
+            arrowsSvg.setAttribute("viewBox", "0 0 " + width + " " + height);
+            updateCanvasBoundsOverlay(canvasBounds);
+
+            return normalization;
         }
 
         function getElementCompositionKey(element) {
@@ -1675,6 +1762,8 @@
             let missing = 0;
             let duplicate = 0;
 
+            resetCanvasOriginDebt();
+
             composition.placements.forEach(function (placement) {
                 const element = elementsByKey.get(placement.key);
 
@@ -1704,13 +1793,7 @@
                 };
             }
 
-            if (isFullscreen() && fullpageSession) {
-                fullpageSession.fullpageNodePositionsChanged = true;
-            }
-
-            updateStageWidthToFit(nodeElements);
-            updateStageHeight(nodeElements);
-            drawArrows(objectElements);
+            refreshGeometry(nodeElements, objectElements);
 
             if (!hashMatches) {
                 return {
@@ -1720,7 +1803,7 @@
                     duplicate: duplicate,
                     hashMatches: hashMatches,
                     versionMatches: versionMatches,
-                    message: "Partial composition import: applied " + applied + " of " + composition.placements.length + " placements. The composition may be outdated."
+                    message: "Diagram composition may be outdated."
                 };
             }
 
@@ -1732,7 +1815,7 @@
                     duplicate: duplicate,
                     hashMatches: hashMatches,
                     versionMatches: versionMatches,
-                    message: "Composition imported with warnings: UI version differs from the current diagram renderer."
+                    message: "Composition renderer version differs."
                 };
             }
 
@@ -1744,7 +1827,7 @@
                     duplicate: duplicate,
                     hashMatches: hashMatches,
                     versionMatches: versionMatches,
-                    message: "Partial composition import: applied " + applied + " of " + composition.placements.length + " placements. Some elements were not found."
+                    message: "Partial composition import."
                 };
             }
 
@@ -1780,19 +1863,6 @@
             return navigator.clipboard.readText();
         }
 
-        function clampNodePosition(element) {
-            const left = parseFloat(element.style.left) || 0;
-            const top = parseFloat(element.style.top) || 0;
-            const maxX = Math.max(0, stage.clientWidth - element.offsetWidth);
-            const maxY = Math.max(0, stage.clientHeight - element.offsetHeight);
-
-            setNodePosition(
-                element,
-                clamp(left, 0, maxX),
-                clamp(top, 0, maxY)
-            );
-        }
-
         function getNodeBounds(nodeElements) {
             return nodeElements.reduce(function (bounds, element) {
                 const left = parseFloat(element.style.left) || 0;
@@ -1825,40 +1895,6 @@
 
                 setNodePosition(element, left + offsetX, top + offsetY);
             });
-        }
-
-        function getCompactTargetLeft(preferredLeft) {
-            return Number.isFinite(preferredLeft) ? preferredLeft : LAYOUT.outerGap;
-        }
-
-        function getCompactTargetTop(bounds) {
-            const contentHeight = bounds.bottom - bounds.top;
-            const stageHeight = Math.max(LAYOUT.minHeight, contentHeight + LAYOUT.outerGap * 2);
-
-            return Math.max(LAYOUT.outerGap, Math.round((stageHeight - contentHeight) / 2));
-        }
-
-        function normalizeCompactNodeGroup(nodeElements, compactBounds) {
-            if (!nodeElements.length) {
-                return {
-                    x: 0,
-                    y: 0
-                };
-            }
-
-            const bounds = getNodeBounds(nodeElements);
-            const targetLeft = getCompactTargetLeft(compactBounds && compactBounds.left);
-            const targetTop = getCompactTargetTop(bounds);
-            const offsetX = targetLeft - bounds.left;
-            const offsetY = targetTop - bounds.top;
-
-            offsetNodeGroup(nodeElements, offsetX, offsetY);
-            updateStageWidthToFit(nodeElements);
-
-            return {
-                x: offsetX,
-                y: offsetY
-            };
         }
 
         function computeObjectLevels(state) {
@@ -2382,31 +2418,6 @@
             avoidAlternativePathCollisions(state, frameElements, objectElements, objectColumns);
         }
 
-        function updateStageHeight(nodeElements) {
-            let bottom = isFullscreen()
-                ? Math.max(LAYOUT.minHeight, viewport.clientHeight)
-                : LAYOUT.minHeight;
-
-            nodeElements.forEach(function (element) {
-                const rect = rectInStage(element);
-                bottom = Math.max(bottom, rect.bottom + LAYOUT.outerGap);
-            });
-
-            stage.style.height = bottom + "px";
-            arrowsSvg.setAttribute("viewBox", "0 0 " + stage.offsetWidth + " " + bottom);
-        }
-
-        function updateStageWidthToFit(nodeElements) {
-            let right = LAYOUT.minWidth;
-
-            nodeElements.forEach(function (element) {
-                const rect = rectInStage(element);
-                right = Math.max(right, rect.right + LAYOUT.outerGap);
-            });
-
-            updateStageWidth(right);
-        }
-
         function sideNormal(side) {
             if (side === "left") {
                 return { x: -1, y: 0 };
@@ -2756,50 +2767,79 @@
             document.documentElement.style.scrollBehavior = savedScrollBehavior;
         }
 
-        function offsetWindowScroll(offsetY) {
-            if (!offsetY) {
+        function getVisibleViewportEdge(rect, viewportSize, edge) {
+            const visibleStart = Math.max(rect[edge.start], 0);
+            const visibleEnd = Math.min(rect[edge.end], viewportSize);
+
+            if (visibleEnd > visibleStart) {
+                return visibleStart;
+            }
+
+            return clamp(viewportSize / 2, rect[edge.start], rect[edge.end]);
+        }
+
+        function captureViewportAnchor() {
+            const viewportRect = viewport.getBoundingClientRect();
+            const stageRect = stage.getBoundingClientRect();
+            const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+            const screenX = getVisibleViewportEdge(viewportRect, viewportWidth, {
+                start: "left",
+                end: "right"
+            });
+            const screenY = getVisibleViewportEdge(viewportRect, viewportHeight, {
+                start: "top",
+                end: "bottom"
+            });
+
+            return {
+                x: screenX - stageRect.left,
+                y: screenY - stageRect.top,
+                screenX: screenX,
+                screenY: screenY
+            };
+        }
+
+        function getAnchorScreenX(anchor) {
+            const viewportRect = viewport.getBoundingClientRect();
+
+            return clamp(anchor.screenX, viewportRect.left, viewportRect.right);
+        }
+
+        function restoreViewportAnchor(anchor) {
+            if (!anchor) {
+                return;
+            }
+
+            const screenX = getAnchorScreenX(anchor);
+            const viewportRect = viewport.getBoundingClientRect();
+            viewport.scrollLeft = Math.max(0, anchor.x - (screenX - viewportRect.left));
+
+            if (isFullscreen()) {
+                viewport.scrollTop = Math.max(0, anchor.y - (anchor.screenY - viewportRect.top));
                 return;
             }
 
             const scroll = readWindowScroll();
+            const stageRect = stage.getBoundingClientRect();
 
             restoreWindowScroll({
                 left: scroll.left,
-                top: scroll.top + offsetY
+                top: scroll.top + stageRect.top + anchor.y - anchor.screenY
             });
         }
 
-        function captureExitPageScrollAnchor(session) {
-            if (!FULLPAGE_MODE.anchorPageScrollToDiagramOnExit || !session) {
-                return null;
-            }
+        function updateFullpageStageOffset(anchor) {
+            const left = Math.max(0, Math.round(anchor.screenX - anchor.x));
+            const top = Math.max(0, Math.round(anchor.screenY - anchor.y));
 
-            const scroll = readWindowScroll();
-            const visualRect = root.getBoundingClientRect();
-            const flowRect = session.placeholder
-                ? session.placeholder.getBoundingClientRect()
-                : root.getBoundingClientRect();
-
-            return {
-                left: scroll.left,
-                top: scroll.top + flowRect.top - visualRect.top
-            };
+            root.style.setProperty("--python-state-fullpage-stage-offset-left", left + "px");
+            root.style.setProperty("--python-state-fullpage-stage-offset-top", top + "px");
         }
 
-        function readViewportScroll() {
-            return {
-                left: viewport.scrollLeft,
-                top: viewport.scrollTop
-            };
-        }
-
-        function restoreViewportScroll(position) {
-            if (!position) {
-                return;
-            }
-
-            viewport.scrollLeft = position.left;
-            viewport.scrollTop = position.top;
+        function clearFullpageStageOffset() {
+            root.style.removeProperty("--python-state-fullpage-stage-offset-left");
+            root.style.removeProperty("--python-state-fullpage-stage-offset-top");
         }
 
         function createFullpagePlaceholder() {
@@ -2832,55 +2872,12 @@
             document.body.style.overflow = session.savedBodyOverflow;
         }
 
-        function captureFullpageTransition(nodeElements) {
-            return {
-                nodeViewportPositions: FULLPAGE_MODE.preserveNodeViewportPositions
-                    ? captureNodeViewportPositions(nodeElements)
-                    : null,
-                viewportScroll: FULLPAGE_MODE.preserveViewportScroll
-                    ? readViewportScroll()
-                    : null
-            };
-        }
-
-        function applyFullpageTransition(transition) {
-            if (!transition) {
-                return;
-            }
-
-            if (transition.nodeViewportPositions) {
-                applyNodeViewportPositions(transition.nodeViewportPositions);
-            }
-
-            restoreViewportScroll(transition.viewportScroll);
-        }
-
-        function captureCompactLayout(nodeElements) {
-            return {
-                nodePositions: captureNodeStagePositions(nodeElements),
-                bounds: nodeElements.length ? getNodeBounds(nodeElements) : null,
-                viewportScroll: readViewportScroll()
-            };
-        }
-
-        function restoreCompactLayout(layout) {
-            if (!layout) {
-                return;
-            }
-
-            applyNodeStagePositions(layout.nodePositions);
-            restoreViewportScroll(layout.viewportScroll);
-        }
-
-        function beginFullpageSession(nodeElements) {
-            const compactLayout = captureCompactLayout(nodeElements);
+        function beginFullpageSession() {
             const session = {
                 pageScroll: FULLPAGE_MODE.preservePageScroll ? readWindowScroll() : null,
-                compactLayout: compactLayout,
                 placeholder: createFullpagePlaceholder(),
                 savedDocumentOverflow: "",
-                savedBodyOverflow: "",
-                fullpageNodePositionsChanged: false
+                savedBodyOverflow: ""
             };
 
             if (FULLPAGE_MODE.lockDocumentScroll) {
@@ -2890,7 +2887,7 @@
             return session;
         }
 
-        function endFullpageSession(session, pageScrollAnchor) {
+        function endFullpageSession(session) {
             if (!session) {
                 return;
             }
@@ -2902,12 +2899,6 @@
             if (session.placeholder) {
                 session.placeholder.remove();
             }
-
-            if (pageScrollAnchor) {
-                restoreWindowScroll(pageScrollAnchor);
-            } else if (FULLPAGE_MODE.preservePageScroll) {
-                restoreWindowScroll(session.pageScroll);
-            }
         }
 
         function updateFullscreenButton(enabled) {
@@ -2918,7 +2909,7 @@
         }
 
         function refreshGeometry(allNodeElements, objectElements) {
-            updateStageHeight(allNodeElements);
+            updateCanvasMetrics(allNodeElements);
             drawArrows(objectElements);
         }
 
@@ -2927,12 +2918,14 @@
                 return;
             }
 
-            const transition = captureFullpageTransition(allNodeElements);
-            const session = enabled ? beginFullpageSession(allNodeElements) : fullpageSession;
-            const exitPageScrollAnchor = enabled ? null : captureExitPageScrollAnchor(session);
+            const anchor = captureViewportAnchor();
+            const session = enabled ? beginFullpageSession() : fullpageSession;
 
             if (enabled) {
                 updateFullpageMetrics();
+                updateFullpageStageOffset(anchor);
+            } else {
+                clearFullpageStageOffset();
             }
 
             root.classList.toggle(FULLPAGE_MODE.className, enabled);
@@ -2942,29 +2935,37 @@
                 fullpageSession = session;
                 restoreWindowScroll(session.pageScroll);
             } else {
-                endFullpageSession(session, exitPageScrollAnchor);
+                endFullpageSession(session);
                 fullpageSession = null;
             }
 
             window.requestAnimationFrame(function () {
-                if (enabled) {
-                    applyFullpageTransition(transition);
-                    updateStageWidthToFit(allNodeElements);
-                } else {
-                    resetStageWidthToViewport();
-                    if (session && !session.fullpageNodePositionsChanged) {
-                        restoreCompactLayout(session.compactLayout);
-                    } else {
-                        applyFullpageTransition(transition);
-                    }
-                    updateStageWidthToFit(allNodeElements);
-                }
-
+                const normalization = updateCanvasMetrics(allNodeElements);
+                anchor.x += normalization.x;
+                anchor.y += normalization.y;
+                restoreViewportAnchor(anchor);
                 refreshGeometry(allNodeElements, objectElements);
             });
         }
 
-        function makeDraggable(element, objectElements) {
+        function normalizeDraggedNodePosition(nodeElements, x, y) {
+            const shiftX = Math.max(0, LAYOUT.canvasPadding - x);
+            const shiftY = Math.max(0, LAYOUT.canvasPadding - y);
+
+            if (shiftX || shiftY) {
+                offsetNodeGroup(nodeElements, shiftX, shiftY);
+                addCanvasOriginDebt(shiftX, shiftY);
+                viewport.scrollLeft += shiftX;
+                viewport.scrollTop += shiftY;
+            }
+
+            return {
+                x: Math.max(LAYOUT.canvasPadding, x + shiftX),
+                y: Math.max(LAYOUT.canvasPadding, y + shiftY)
+            };
+        }
+
+        function makeDraggable(element, objectElements, allNodeElements) {
             let offsetX = 0;
             let offsetY = 0;
             let dragging = false;
@@ -2985,16 +2986,15 @@
                 }
 
                 const stageRect = stage.getBoundingClientRect();
-                const maxX = Math.max(0, stage.clientWidth - element.offsetWidth);
-                const maxY = Math.max(0, stage.clientHeight - element.offsetHeight);
-                const x = clamp(event.clientX - stageRect.left - offsetX, 0, maxX);
-                const y = clamp(event.clientY - stageRect.top - offsetY, 0, maxY);
+                const position = normalizeDraggedNodePosition(
+                    allNodeElements,
+                    event.clientX - stageRect.left - offsetX,
+                    event.clientY - stageRect.top - offsetY
+                );
 
-                setNodePosition(element, x, y);
-                if (isFullscreen() && fullpageSession) {
-                    fullpageSession.fullpageNodePositionsChanged = true;
-                }
-                drawArrows(objectElements);
+                setNodePosition(element, position.x, position.y);
+                normalizeCanvasOrigin(allNodeElements, true);
+                refreshGeometry(allNodeElements, objectElements);
             });
 
             function stopDragging() {
@@ -3036,12 +3036,11 @@
                 }
             }
 
-            updateStageHeight(allNodeElements);
-            drawArrows(objectElements);
+            refreshGeometry(allNodeElements, objectElements);
             const originalNodePositions = captureNodeStagePositions(allNodeElements);
 
             allNodeElements.forEach(function (element) {
-                makeDraggable(element, objectElements);
+                makeDraggable(element, objectElements, allNodeElements);
             });
 
             fullscreenButton.addEventListener("click", function () {
@@ -3049,13 +3048,8 @@
             });
 
             resetButton.addEventListener("click", function () {
+                resetCanvasOriginDebt();
                 applyNodeStagePositions(originalNodePositions);
-
-                if (isFullscreen() && fullpageSession) {
-                    fullpageSession.fullpageNodePositionsChanged = true;
-                }
-
-                updateStageWidthToFit(allNodeElements);
                 refreshGeometry(allNodeElements, objectElements);
                 setCompositionStatus("Composition reset.");
             });
@@ -3098,12 +3092,8 @@
             window.addEventListener("resize", function () {
                 if (isFullscreen()) {
                     updateFullpageMetrics();
-                    updateStageWidthToFit(allNodeElements);
-                } else {
-                    resetStageWidthToViewport();
                 }
 
-                allNodeElements.forEach(clampNodePosition);
                 refreshGeometry(allNodeElements, objectElements);
             });
         }
