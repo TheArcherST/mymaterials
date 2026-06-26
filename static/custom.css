@@ -165,6 +165,14 @@
 	width: 100%;
 }
 
+.z-hl {
+	background-color: #e6edf3;
+}
+
+:root.dark .z-hl {
+	background-color: #373e47;
+}
+
 /* todo: adjust nav styles  */
 
 .left-nav, .right-nav, main {
@@ -174,4 +182,3 @@
 h1,h2,h3,h4,h5,h6,.title{
 	font-family: "Noto Serif", serif;
 }
-
