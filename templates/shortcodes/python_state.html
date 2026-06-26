@@ -2948,7 +2948,19 @@
             });
         }
 
-        function normalizeDraggedNodePosition(nodeElements, x, y) {
+        function normalizeDraggedNodePosition(element, nodeElements, x, y, dragBounds) {
+            if (!isFullscreen()) {
+                const minX = LAYOUT.canvasPadding;
+                const minY = LAYOUT.canvasPadding;
+                const maxX = Math.max(minX, dragBounds.width - element.offsetWidth - LAYOUT.canvasPadding);
+                const maxY = Math.max(minY, dragBounds.height - element.offsetHeight - LAYOUT.canvasPadding);
+
+                return {
+                    x: clamp(x, minX, maxX),
+                    y: clamp(y, minY, maxY)
+                };
+            }
+
             const shiftX = Math.max(0, LAYOUT.canvasPadding - x);
             const shiftY = Math.max(0, LAYOUT.canvasPadding - y);
 
@@ -2968,12 +2980,17 @@
         function makeDraggable(element, objectElements, allNodeElements) {
             let offsetX = 0;
             let offsetY = 0;
+            let dragBounds = null;
             let dragging = false;
 
             element.addEventListener("pointerdown", function (event) {
                 dragging = true;
                 element.classList.add("python-state-shortcode__box--dragging");
                 element.setPointerCapture(event.pointerId);
+                dragBounds = {
+                    width: stage.clientWidth,
+                    height: stage.clientHeight
+                };
 
                 const rect = element.getBoundingClientRect();
                 offsetX = event.clientX - rect.left;
@@ -2987,9 +3004,11 @@
 
                 const stageRect = stage.getBoundingClientRect();
                 const position = normalizeDraggedNodePosition(
+                    element,
                     allNodeElements,
                     event.clientX - stageRect.left - offsetX,
-                    event.clientY - stageRect.top - offsetY
+                    event.clientY - stageRect.top - offsetY,
+                    dragBounds
                 );
 
                 setNodePosition(element, position.x, position.y);
@@ -2999,6 +3018,7 @@
 
             function stopDragging() {
                 dragging = false;
+                dragBounds = null;
                 element.classList.remove("python-state-shortcode__box--dragging");
             }
 

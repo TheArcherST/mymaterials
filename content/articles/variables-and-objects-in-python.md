@@ -165,7 +165,7 @@ objects:
 1. Получение объектов через *вычисление выражений* (примеры таких выражений: `1`, `a + 1`)
 2. Создание или изменение ссылки переменной через *присваивание* (в общем виде, `имя = выражение`, например `a = 1`, `a = 1 + 2`)
 
-Обратите внимание, что каждый из механизмов происходит в соответсвии с конкретным текстом в программе, и приводит к конкретным изменениям в диаграмме.  Например, выражение `1 + 1` вычислилось, и результатом его вычисления является объект в оперативной памяти, который вы можете визуально представить так
+Обратите внимание, что каждый из механизмов происходит в соответствии с конкретным текстом в программе, и приводит к конкретным изменениям в диаграмме.  Например, выражение `1 + 1` вычислилось, и результатом его вычисления является объект в оперативной памяти, который вы можете визуально представить так
 
 {% python_state() %}
 objects:
@@ -194,6 +194,203 @@ objects:
 ```python
 a = 1 + 1
 ```
+
+# Оптимизации использования оперативной памяти
+
+Рассмотрим такой код.
+
+```python
+str_1 = "Hello"
+str_2 = "Hello"
+lst_1 = []
+lst_2 = []
+
+print(str_1, str_2, lst_1, lst_2)
+```
+
+Логично будет предположить, что после выполнения этого кода, в оперативной памяти мы увидим следующее
+
+{% python_state() %}
+frames:
+  global:
+    bindings:
+      - name: str_1
+        object: str_1
+      - name: str_2
+        object: str_2
+      - name: lst_1
+        object: lst_1
+      - name: lst_2
+        object: lst_2
+objects:
+  str_1:
+    type: str
+    value: Hello
+  str_2:
+    type: str
+    value: Hello
+  lst_1:
+    type: list
+    value: []
+  lst_2:
+    type: list
+    value: []
+composition: '{"composition":{"v":1,"h":"ps1-1lfqhaey4co","u":"1","p":{"frame:global":[118,24],"object:str_1":[560,24],"object:str_2":[559,102],"object:lst_1":[408,191],"object:lst_2":[408,270]}}}'
+{% end %}
+
+Но давайте подумаем, есть ли смысл в том, чтобы держать в памяти все 4 объекта?  Тут же есть два дубля: в памяти два раза лежит одно и то же.  Можно сохранить в памяти всего два объекта, и результат выполнения не поменяется.  Допустим, интерпретатор Python тоже так решил, и вот в этих строках
+
+```python,hl_lines="2 4"
+str_1 = "Hello"
+str_2 = "Hello"
+lst_1 = []
+lst_2 = []
+
+print(str_1, str_2, lst_1, lst_2)
+```
+
+Не создавал объект, а возвращал уже имеющийся, точно такой же объект.  В таком случае, получится так
+
+{% python_state() %}
+frames:
+  global:
+    bindings:
+      - name: str_1
+        object: str_1
+      - name: str_2
+        object: str_1
+      - name: lst_1
+        object: lst_1
+      - name: lst_2
+        object: lst_1
+objects:
+  str_1:
+    type: str
+    value: Hello
+  lst_1:
+    type: list
+    value: []
+{% end %}
+
+Но что, если мы захотим добавить в один из списков элемент?
+
+```python
+str_1 = "Hello"
+str_2 = "Hello"
+lst_1 = []
+lst_2 = []
+
+lst_1.append(str_1)
+
+print(str_1, str_2, lst_1, lst_2)
+```
+
+В таком случае получилось следующее
+
+{% python_state() %}
+frames:
+  global:
+    bindings:
+      - name: str_1
+        object: str_1
+      - name: str_2
+        object: str_1
+      - name: lst_1
+        object: lst_1
+      - name: lst_2
+        object: lst_1
+objects:
+  str_1:
+    type: str
+    value: Hello
+  lst_1:
+    type: list
+    value:
+      - object: str_1
+composition: '{"composition":{"v":1,"h":"ps1-qdbr0sdp76","u":"1","p":{"frame:global":[118,60],"object:str_1":[619,71.88],"object:lst_1":[438,144]}}}'
+{% end %}
+
+И в выводе у нас будет
+
+```txt
+Hello Hello ['Hello'] ['Hello']
+```
+
+Что, понятное дело, не то, чего мы ожидаем.  Мы хотим, чтобы изменился только один список; мы ожидаем, что имена указывают на разные места в памяти, и хотим изменить только одно из них.  Поэтому так оптимизировать хранение списков у нас не получится.
+
+Но что насчёт строк? А со строками дело обстоит интереснее.  Они неизменяемы.  Вы никаким образом не сможете изменить то, что находится внутри объекта с типом `str`.  Поэтому для них такая оптимизация будет работать.  По этой причине Python оставляет за собой возможность вернуть вам тот же самый объект.  Поэтому вот этот код
+
+```python
+str_1 = "Hello"
+str_2 = "Hello"
+lst_1 = []
+lst_2 = []
+
+lst_1.append(str_1)
+
+print(str_1, str_2, lst_1, lst_2)
+```
+
+Может привести как к такому состоянию
+
+{% python_state() %}
+frames:
+  global:
+    bindings:
+      - name: str_1
+        object: str_1
+      - name: str_2
+        object: str_2
+      - name: lst_1
+        object: lst_1
+      - name: lst_2
+        object: lst_2
+objects:
+  str_1:
+    type: str
+    value: Hello
+  str_2:
+    type: str
+    value: Hello
+  lst_1:
+    type: list
+    value:
+      - object: str_1
+  lst_2:
+    type: list
+    value: []
+composition: '{"composition":{"v":1,"h":"ps1-29w18v1iih7","u":"1","p":{"frame:global":[118,102],"object:str_1":[623,24],"object:str_2":[623,103],"object:lst_1":[467,181],"object:lst_2":[467,282]}}}'
+{% end %}
+
+Так и к такому
+
+{% python_state() %}
+frames:
+  global:
+    bindings:
+      - name: str_1
+        object: str_1
+      - name: str_2
+        object: str_1
+      - name: lst_1
+        object: lst_1
+      - name: lst_2
+        object: lst_2
+objects:
+  str_1:
+    type: str
+    value: Hello
+  lst_1:
+    type: list
+    value:
+      - object: str_1
+  lst_2:
+    type: list
+    value: []
+composition: '{"composition":{"v":1,"h":"ps1-15eykcowgcj","u":"1","p":{"frame:global":[118,145.37],"object:str_1":[630,24],"object:lst_1":[467,145.37],"object:lst_2":[467,246.37]}}}'
+{% end %}
+
+И, в целом, нам пока не так важно, какой из вариантов произойдёт.  Просто запомните, что для некоторых неизменяемых объектов реализация Python может переиспользовать уже существующий объект.
 
 # Задания
 
@@ -305,7 +502,7 @@ alias.append(alias[0] + alias[0])
 Примечания:
 1. Вы можете двигать блоки на картинках.
 2. Вы можете навести мышку на начало или конец стрелки, чтобы понять, куда именно она указывает.
-3. Вы можете нажать `Full page` рядом с диаграмой чтобы развернуть её на всю страницу.
+3. Вы можете нажать `Full page` рядом с диаграммой чтобы развернуть её на всю страницу.
 
 ### Первое состояние
 
@@ -476,5 +673,69 @@ objects:
   test:
     type: str
     value: Test
-composition: '{"composition":{"v":1,"h":"ps1-1b6m1edqc69","u":"1","p":{"frame:global":[84,174],"object:data":[378,24],"object:users":[453,144],"object:user":[366,263.9],"object:user_copy":[365,407],"object:key_users":[354,145],"object:key_id":[670,224],"object:key_name":[671,398],"object:one":[670,298],"object:test":[671,474]}}}'
+composition: '{"composition":{"v":1,"h":"ps1-1b6m1edqc69","u":"1","p":{"frame:global":[84,174],"object:data":[378,24],"object:users":[453,144],"object:user":[424,271.9],"object:user_copy":[427,414],"object:key_users":[354,145],"object:key_id":[211,401],"object:key_name":[210,485],"object:one":[664,298],"object:test":[662,381]}}}'
+{% end %}
+
+
+### Шестое состояние
+
+{% python_state() %}
+frames:
+  global:
+    bindings:
+      - name: array
+        object: array
+      - name: array_copy
+        object: array_copy
+      - name: array_deepcopy
+        object: array_deepcopy
+objects:
+  array:
+    type: list
+    value:
+      - object: array_row_1
+      - object: array_row_2
+  array_copy:
+    type: list
+    value:
+      - object: array_row_1
+      - object: array_row_2
+  array_deepcopy:
+    type: list
+    value:
+      - object: array_deepcopy_row_1
+      - object: array_deepcopy_row_2
+  array_row_1:
+    type: list
+    value:
+      - object: one
+      - object: two
+  array_row_2:
+    type: list
+    value:
+      - object: three
+      - object: four
+  array_deepcopy_row_1:
+    type: list
+    value:
+      - object: one
+      - object: two
+  array_deepcopy_row_2:
+    type: list
+    value:
+      - object: three
+      - object: four
+  one:
+    type: int
+    value: 1
+  two:
+    type: int
+    value: 2
+  three:
+    type: int
+    value: 3
+  four:
+    type: int
+    value: 4
+composition: '{"composition":{"v":1,"h":"ps1-1e1xrpvc1mo","u":"1","p":{"frame:global":[79,24],"object:array":[387,24],"object:array_copy":[387,125],"object:array_deepcopy":[385,280],"object:array_row_1":[542,24],"object:array_row_2":[542,125],"object:array_deepcopy_row_1":[538,281],"object:array_deepcopy_row_2":[537,391],"object:one":[752,38],"object:two":[751,118],"object:three":[751,200],"object:four":[750,283]}}}'
 {% end %}
