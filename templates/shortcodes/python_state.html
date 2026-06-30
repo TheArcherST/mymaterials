@@ -481,7 +481,14 @@
 .python-state-shortcode--fullscreen .python-state-shortcode__viewport {
     flex: 1 1 auto;
     min-height: 0;
+    cursor: grab;
     overflow: auto;
+    overscroll-behavior: contain;
+    touch-action: none;
+}
+
+.python-state-shortcode--fullscreen .python-state-shortcode__viewport--panning {
+    cursor: grabbing;
 }
 
 .python-state-shortcode--fullscreen .python-state-shortcode__stage {
@@ -539,6 +546,15 @@
         const compositionStatusText = root.querySelector("[data-python-state-composition-status-text]");
         const compositionStatusClose = root.querySelector("[data-python-state-composition-status-close]");
         let fullpageSession = null;
+        let cancelFullpagePanning = function () {};
+        let referenceEntries = [];
+        let scheduledGeometryFrame = 0;
+        let scheduledActiveEdgeFrame = 0;
+        let latestActiveEdgeClientX = 0;
+        let latestActiveEdgeClientY = 0;
+        let edgeHitTargets = [];
+        const edgeElementsById = new Map();
+        const activeEdgeElements = new Set();
         const canvasOriginDebt = {
             x: 0,
             y: 0
@@ -1541,19 +1557,19 @@
             return box;
         }
 
-        function rectInStage(element) {
-            const stageRect = stage.getBoundingClientRect();
+        function rectInStage(element, stageRect) {
+            const resolvedStageRect = stageRect || stage.getBoundingClientRect();
             const rect = element.getBoundingClientRect();
 
             return {
-                left: rect.left - stageRect.left,
-                top: rect.top - stageRect.top,
-                right: rect.right - stageRect.left,
-                bottom: rect.bottom - stageRect.top,
+                left: rect.left - resolvedStageRect.left,
+                top: rect.top - resolvedStageRect.top,
+                right: rect.right - resolvedStageRect.left,
+                bottom: rect.bottom - resolvedStageRect.top,
                 width: rect.width,
                 height: rect.height,
-                centerX: rect.left - stageRect.left + rect.width / 2,
-                centerY: rect.top - stageRect.top + rect.height / 2
+                centerX: rect.left - resolvedStageRect.left + rect.width / 2,
+                centerY: rect.top - resolvedStageRect.top + rect.height / 2
             };
         }
 
@@ -2465,9 +2481,9 @@
             return targetRect.centerX < sourceRect.centerX ? "left" : "right";
         }
 
-        function chooseReferenceSourceSide(reference, sourceRect, targetRect) {
+        function chooseReferenceSourceSide(reference, sourceRect, targetRect, referenceRect) {
             if (reference.classList.contains("python-state-shortcode__reference--collection-item")) {
-                return chooseConnectionSide(rectInStage(reference), targetRect);
+                return chooseConnectionSide(referenceRect, targetRect);
             }
 
             return chooseReferenceSide(sourceRect, targetRect);
@@ -2616,59 +2632,98 @@
             return circle;
         }
 
-        function distanceBetweenPoints(left, right) {
-            const dx = left.x - right.x;
-            const dy = left.y - right.y;
-
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
-        function getPointerPointInStage(event) {
-            const rect = stage.getBoundingClientRect();
-
-            return {
-                x: event.clientX - rect.left,
-                y: event.clientY - rect.top
-            };
-        }
-
         function setEdgeActive(edgeId, active) {
-            const edge = arrowsSvg.querySelector("[data-python-state-edge-id=\"" + edgeId + "\"]");
+            const edge = edgeElementsById.get(edgeId);
 
-            if (edge) {
-                edge.classList.toggle("python-state-shortcode__edge--active", active);
+            if (!edge) {
+                return;
+            }
+
+            edge.classList.toggle("python-state-shortcode__edge--active", active);
+
+            if (active) {
+                activeEdgeElements.add(edge);
+            } else {
+                activeEdgeElements.delete(edge);
             }
         }
 
         function updateActiveEdgesAtPoint(point) {
-            arrowsSvg.querySelectorAll(".python-state-shortcode__edge").forEach(function (edge) {
-                const source = {
-                    x: Number(edge.dataset.pythonStateSourceX),
-                    y: Number(edge.dataset.pythonStateSourceY)
-                };
-                const target = {
-                    x: Number(edge.dataset.pythonStateTargetX),
-                    y: Number(edge.dataset.pythonStateTargetY)
-                };
-                const active = distanceBetweenPoints(point, source) <= LAYOUT.edgeEndpointHitRadius
-                    || distanceBetweenPoints(point, target) <= LAYOUT.edgeEndpointHitRadius;
+            const radiusSq = LAYOUT.edgeEndpointHitRadius * LAYOUT.edgeEndpointHitRadius;
 
-                edge.classList.toggle("python-state-shortcode__edge--active", active);
+            edgeHitTargets.forEach(function (hitTarget) {
+                const sourceDx = point.x - hitTarget.sourceX;
+                const sourceDy = point.y - hitTarget.sourceY;
+                const targetDx = point.x - hitTarget.targetX;
+                const targetDy = point.y - hitTarget.targetY;
+                const active = sourceDx * sourceDx + sourceDy * sourceDy <= radiusSq
+                    || targetDx * targetDx + targetDy * targetDy <= radiusSq;
+
+                hitTarget.edge.classList.toggle("python-state-shortcode__edge--active", active);
+
+                if (active) {
+                    activeEdgeElements.add(hitTarget.edge);
+                } else {
+                    activeEdgeElements.delete(hitTarget.edge);
+                }
+            });
+        }
+
+        function cancelActiveEdgeUpdate() {
+            if (!scheduledActiveEdgeFrame) {
+                return;
+            }
+
+            window.cancelAnimationFrame(scheduledActiveEdgeFrame);
+            scheduledActiveEdgeFrame = 0;
+        }
+
+        function scheduleActiveEdgesAtClientPoint(clientX, clientY) {
+            latestActiveEdgeClientX = clientX;
+            latestActiveEdgeClientY = clientY;
+
+            if (scheduledActiveEdgeFrame) {
+                return;
+            }
+
+            scheduledActiveEdgeFrame = window.requestAnimationFrame(function () {
+                const stageRect = stage.getBoundingClientRect();
+
+                scheduledActiveEdgeFrame = 0;
+                updateActiveEdgesAtPoint({
+                    x: latestActiveEdgeClientX - stageRect.left,
+                    y: latestActiveEdgeClientY - stageRect.top
+                });
             });
         }
 
         function clearActiveEdges() {
-            arrowsSvg.querySelectorAll(".python-state-shortcode__edge--active").forEach(function (edge) {
+            cancelActiveEdgeUpdate();
+            activeEdgeElements.forEach(function (edge) {
                 edge.classList.remove("python-state-shortcode__edge--active");
             });
+            activeEdgeElements.clear();
         }
 
         function drawArrows(objectElements) {
-            arrowsSvg.querySelectorAll(".python-state-shortcode__edge").forEach(function (edge) {
-                edge.remove();
-            });
+            const fragment = document.createDocumentFragment();
+            const stageRect = stage.getBoundingClientRect();
+            const rectCache = new Map();
 
-            root.querySelectorAll("[data-python-state-target]").forEach(function (reference, index) {
+            edgeHitTargets = [];
+            edgeElementsById.clear();
+            activeEdgeElements.clear();
+
+            function cachedRect(element) {
+                if (!rectCache.has(element)) {
+                    rectCache.set(element, rectInStage(element, stageRect));
+                }
+
+                return rectCache.get(element);
+            }
+
+            referenceEntries.forEach(function (entry, index) {
+                const reference = entry.reference;
                 const target = reference.dataset.pythonStateTarget;
                 const object = objectElements.get(target);
 
@@ -2676,15 +2731,16 @@
                     return;
                 }
 
-                const port = reference.querySelector(".python-state-shortcode__reference-port");
-                const sourceBox = reference.closest(".python-state-shortcode__box");
-                const sourceRect = rectInStage(sourceBox);
-                const objectRect = rectInStage(object);
-                const sourceSide = chooseReferenceSourceSide(reference, sourceRect, objectRect);
+                const port = entry.port;
+                const sourceBox = entry.sourceBox;
+                const sourceRect = cachedRect(sourceBox);
+                const objectRect = cachedRect(object);
+                const referenceRect = cachedRect(reference);
+                const sourceSide = chooseReferenceSourceSide(reference, sourceRect, objectRect, referenceRect);
 
                 reference.dataset.pythonStateReferenceSide = sourceSide;
 
-                const portRect = rectInStage(port || reference);
+                const portRect = port ? cachedRect(port) : referenceRect;
                 const portAnchor = { x: portRect.centerX, y: portRect.centerY };
                 const targetSide = chooseConnectionSide(objectRect, portRect);
                 const targetBorder = borderPointForSide(objectRect, targetSide, portAnchor);
@@ -2701,10 +2757,14 @@
 
                 edge.setAttribute("aria-hidden", "true");
                 edge.dataset.pythonStateEdgeId = edgeId;
-                edge.dataset.pythonStateSourceX = visualPortPoint.x;
-                edge.dataset.pythonStateSourceY = visualPortPoint.y;
-                edge.dataset.pythonStateTargetX = end.x;
-                edge.dataset.pythonStateTargetY = end.y;
+                edgeElementsById.set(edgeId, edge);
+                edgeHitTargets.push({
+                    edge: edge,
+                    sourceX: visualPortPoint.x,
+                    sourceY: visualPortPoint.y,
+                    targetX: end.x,
+                    targetY: end.y
+                });
                 reference.dataset.pythonStateEdgeId = edgeId;
                 reference.onmouseenter = function () {
                     setEdgeActive(edgeId, true);
@@ -2718,8 +2778,10 @@
                 edge.appendChild(createEdgeArrowhead("python-state-shortcode__edge-arrowhead", arrowheadPoints));
                 edge.appendChild(createEdgeCircle("python-state-shortcode__edge-port-halo", visualPortPoint, 5.2));
                 edge.appendChild(createEdgeCircle("python-state-shortcode__edge-port", visualPortPoint, 4.2));
-                arrowsSvg.appendChild(edge);
+                fragment.appendChild(edge);
             });
+
+            arrowsSvg.replaceChildren(fragment);
         }
 
         function isFullscreen() {
@@ -2913,6 +2975,17 @@
             drawArrows(objectElements);
         }
 
+        function scheduleGeometryRefresh(allNodeElements, objectElements) {
+            if (scheduledGeometryFrame) {
+                return;
+            }
+
+            scheduledGeometryFrame = window.requestAnimationFrame(function () {
+                scheduledGeometryFrame = 0;
+                refreshGeometry(allNodeElements, objectElements);
+            });
+        }
+
         function setFullscreenMode(enabled, allNodeElements, objectElements) {
             if (enabled === isFullscreen()) {
                 return;
@@ -2925,6 +2998,7 @@
                 updateFullpageMetrics();
                 updateFullpageStageOffset(anchor);
             } else {
+                cancelFullpagePanning();
                 clearFullpageStageOffset();
             }
 
@@ -3013,17 +3087,111 @@
 
                 setNodePosition(element, position.x, position.y);
                 normalizeCanvasOrigin(allNodeElements, true);
-                refreshGeometry(allNodeElements, objectElements);
+                scheduleGeometryRefresh(allNodeElements, objectElements);
             });
 
             function stopDragging() {
                 dragging = false;
                 dragBounds = null;
                 element.classList.remove("python-state-shortcode__box--dragging");
+
+                if (!scheduledGeometryFrame) {
+                    refreshGeometry(allNodeElements, objectElements);
+                }
             }
 
             element.addEventListener("pointerup", stopDragging);
             element.addEventListener("pointercancel", stopDragging);
+        }
+
+        function setupFullpagePanning() {
+            let panning = false;
+            let activePointerId = null;
+            let startClientX = 0;
+            let startClientY = 0;
+            let startScrollLeft = 0;
+            let startScrollTop = 0;
+
+            function capturePanPointer(pointerId) {
+                if (!viewport.setPointerCapture) {
+                    return;
+                }
+
+                try {
+                    viewport.setPointerCapture(pointerId);
+                } catch (error) {
+                    // Pointer capture can fail if the pointer is already gone.
+                }
+            }
+
+            function releasePanPointer(pointerId) {
+                if (!viewport.releasePointerCapture || !viewport.hasPointerCapture || !viewport.hasPointerCapture(pointerId)) {
+                    return;
+                }
+
+                try {
+                    viewport.releasePointerCapture(pointerId);
+                } catch (error) {
+                    // Releasing capture is best-effort across browsers.
+                }
+            }
+
+            function clearPanning() {
+                if (!panning) {
+                    return;
+                }
+
+                panning = false;
+                viewport.classList.remove("python-state-shortcode__viewport--panning");
+
+                if (activePointerId !== null) {
+                    releasePanPointer(activePointerId);
+                }
+
+                activePointerId = null;
+            }
+
+            cancelFullpagePanning = clearPanning;
+
+            viewport.addEventListener("pointerdown", function (event) {
+                if (!isFullscreen() || event.button !== 0 || event.target.closest(".python-state-shortcode__box")) {
+                    return;
+                }
+
+                panning = true;
+                startClientX = event.clientX;
+                startClientY = event.clientY;
+                startScrollLeft = viewport.scrollLeft;
+                startScrollTop = viewport.scrollTop;
+                viewport.classList.add("python-state-shortcode__viewport--panning");
+                activePointerId = event.pointerId;
+                capturePanPointer(event.pointerId);
+                clearActiveEdges();
+                event.preventDefault();
+            });
+
+            viewport.addEventListener("pointermove", function (event) {
+                if (!panning) {
+                    return;
+                }
+
+                if (!isFullscreen()) {
+                    clearPanning();
+                    return;
+                }
+
+                viewport.scrollLeft = startScrollLeft - (event.clientX - startClientX);
+                viewport.scrollTop = startScrollTop - (event.clientY - startClientY);
+                clearActiveEdges();
+                event.preventDefault();
+            });
+
+            function stopPanning() {
+                clearPanning();
+            }
+
+            viewport.addEventListener("pointerup", stopPanning);
+            viewport.addEventListener("pointercancel", stopPanning);
         }
 
         function render(state) {
@@ -3041,6 +3209,13 @@
             });
 
             const allNodeElements = frameElements.concat(Array.from(objectElements.values()));
+            referenceEntries = Array.from(root.querySelectorAll("[data-python-state-target]")).map(function (reference) {
+                return {
+                    reference: reference,
+                    port: reference.querySelector(".python-state-shortcode__reference-port"),
+                    sourceBox: reference.closest(".python-state-shortcode__box")
+                };
+            });
 
             positionDefault(state, frameElements, objectElements);
             if (state.composition) {
@@ -3062,6 +3237,7 @@
             allNodeElements.forEach(function (element) {
                 makeDraggable(element, objectElements, allNodeElements);
             });
+            setupFullpagePanning();
 
             fullscreenButton.addEventListener("click", function () {
                 setFullscreenMode(!isFullscreen(), allNodeElements, objectElements);
@@ -3104,7 +3280,7 @@
             });
 
             stage.addEventListener("pointermove", function (event) {
-                updateActiveEdgesAtPoint(getPointerPointInStage(event));
+                scheduleActiveEdgesAtClientPoint(event.clientX, event.clientY);
             });
 
             stage.addEventListener("pointerleave", clearActiveEdges);
