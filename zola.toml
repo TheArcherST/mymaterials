@@ -55,3 +55,11 @@ reverse = true
 
 [extra.ui_version_control]
 python_state = "1"
+
+[extra.analytics]
+enabled = true
+
+[extra.analytics.goatcounter]
+user = "stats.mymaterials.ru"
+host = ""
+
