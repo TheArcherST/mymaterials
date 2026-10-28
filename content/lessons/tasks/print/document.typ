@@ -1,9 +1,8 @@
-
 #import "@preview/rubber-article:0.5.2": *
 #import "@preview/ctheorems:2.0.0": *
 #import "@preview/codly:2.0.0" as codly
-#import thm-themes.ams: *
 #import "@preview/latex-lookalike:0.1.4"
+#import thm-themes.ams: *
 #import "/typst/python-state.typ": python-state
 
 #show: article.with(
@@ -42,9 +41,27 @@
   syntax: none,
   foreground: black,
   muted: luma(100),
-  line: (text: (font: "New Computer Modern Mono", size: 10pt, fill: black)),
-  number: (text: (font: "New Computer Modern", size: 7pt, fill: luma(90))),
+
+  // Основной код
+  line: (
+    text: (
+      font: "New Computer Modern Mono",
+      size: 10pt,
+      fill: black,
+    ),
+  ),
+
+  // Номера строк
+  number: (
+    text: (
+      font: "New Computer Modern",
+      size: 7pt,
+      fill: luma(90),
+    ),
+  ),
 )
+
+// Общие параметры листинга
 #show: codly.set_(
   lang-position: none,
   file-position: none,
@@ -52,19 +69,44 @@
   padding: 0pt,
   breakable: false,
   width: 100%,
+
+  // Расстояние между номером строки и кодом
   column-gutter: 8pt,
 )
-#show: codly.line-set_(fill: none, stroke: none, inset: (x: 0pt, y: 0.6pt))
-#show: codly.number-set_(numbering: "1", placement: "outside", align: right + horizon)
+
+// Строки без фона и рамок
+#show: codly.line-set_(
+  fill: none,
+  stroke: none,
+  inset: (x: 0pt, y: 1pt),
+)
+
+// Номера строк слева от кода
+#show: codly.number-set_(
+  numbering: "1",
+  placement: "outside",
+  align: right + horizon,
+)
+
 #let number-offset = 11pt
+
 #show raw.where(block: true): it => block(
-  width: 100%, above: 12pt, below: 12pt, breakable: false,
+  width: 100%,
+  above: 12pt,
+  below: 12pt,
+  breakable: false,
 )[
-  #line(length: 100%, stroke: 0.7pt + black)
-  #v(6pt)
-  #move(dx: -number-offset)[#codly.new(it)]
-  #v(6pt)
-  #line(length: 100%, stroke: 0.7pt + black)
+  #line(length: 100%, stroke: 0.3pt + black)
+
+  #v(2pt)
+
+  #move(dx: -number-offset)[
+    #codly.new(it)
+  ]
+
+  #v(2pt)
+
+  #line(length: 100%, stroke: 0.3pt + black)
 ]
 
 Подобные задания будут на зачёте. Списать на зачёте не получится. Он будет устным. Поэтому нужно научиться их решать самостоятельно.
