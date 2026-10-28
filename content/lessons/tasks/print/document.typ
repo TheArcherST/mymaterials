@@ -1,4 +1,5 @@
-#import "@preview/rubber-article:1.5.2": *
+
+#import "@preview/rubber-article:0.5.2": *
 #import "@preview/ctheorems:2.0.0": *
 #import "@preview/codly:2.0.0" as codly
 #import thm-themes.ams: *
@@ -27,15 +28,15 @@
 #show math.equation: set text(weight: "regular")
 
 #maketitle(
-  title: "Задания к модулю 1 (состояние программы)",
+  title: "Материалы к первому модулю зачёта",
   authors: ("Основы программирования на Python",),
-  date: "Октябрь 2026",
+  date: "Ноябрь 2026",
 )
 
 #outline(title: [Содержание])
 #pagebreak()
 
-// Монохромные листинги в духе LaTeX listings с двумя линиями.
+// Код в стиле LaTeX listings, frame=tb.
 #show: codly.theme(
   "clean",
   syntax: none,
@@ -66,19 +67,19 @@
   #line(length: 100%, stroke: 0.7pt + black)
 ]
 
-#heading(level: 1, numbering: none, outlined: false)[Что это такое]
-
 Подобные задания будут на зачёте. Списать на зачёте не получится. Он будет устным. Поэтому нужно научиться их решать самостоятельно.
 
 Задания разбиты по компетенциям (то есть по знаниям и навыкам, владение которыми вам нужно показать).
 
 
-= Находить выражения в тексте программы
+= Задания по компетенциям
+
+== Находить выражения в тексте программы
 
 Для каждого задания найдите все выражения, в том числе вложенные. При наличии составного выражения покажите, из каких выражений оно состоит.
 
 
-== Задание
+=== Пример 1
 
 
 ```python
@@ -88,7 +89,7 @@ print(count, label)
 ```
 
 
-== Задание
+=== Пример 2
 
 
 ```python
@@ -97,7 +98,7 @@ print(result)
 ```
 
 
-== Задание
+=== Пример 3
 
 
 ```python
@@ -109,7 +110,7 @@ print(text)
 ```
 
 
-== Задание
+=== Пример 4
 
 
 ```python
@@ -120,7 +121,7 @@ print(a, b)
 ```
 
 
-== Задание
+=== Пример 5
 
 
 ```python
@@ -129,12 +130,12 @@ print(str(float(x)) + " points")
 ```
 
 
-= Предсказывать результат вычисления выражения
+== Предсказывать результат вычисления выражения
 
 В каждом задании дано начальное состояние программы на диаграмме и одно или несколько выражений. Определите тип и значение результата каждого выражения. Если вычисление вызывает ошибку, укажите, где и почему она возникает.
 
 
-== Задание
+=== Пример 1
 
 
 Начальное состояние:
@@ -150,7 +151,7 @@ print(str(float(x)) + " points")
           b_value: (type: "int", value: 3),
     ),
   )),
-  caption: [Начальное состояние для задания 2.1.],
+  caption: [Начальное состояние для примера 2.1.],
 )
 
 
@@ -162,7 +163,7 @@ a + b * 2
 ```
 
 
-== Задание
+=== Пример 2
 
 
 Начальное состояние:
@@ -178,7 +179,7 @@ a + b * 2
           n_value: (type: "int", value: 3),
     ),
   )),
-  caption: [Начальное состояние для задания 2.2.],
+  caption: [Начальное состояние для примера 2.2.],
 )
 
 
@@ -190,7 +191,7 @@ word + str(n)
 ```
 
 
-== Задание
+=== Пример 3
 
 
 Начальное состояние:
@@ -206,7 +207,7 @@ word + str(n)
           count_value: (type: "int", value: 4),
     ),
   )),
-  caption: [Начальное состояние для задания 2.3.],
+  caption: [Начальное состояние для примера 2.3.],
 )
 
 
@@ -223,7 +224,7 @@ price + count / 2
 ```
 
 
-== Задание
+=== Пример 4
 
 
 Начальное состояние:
@@ -240,7 +241,7 @@ price + count / 2
           text_value: (type: "str", value: "6"),
     ),
   )),
-  caption: [Начальное состояние для задания 2.4.],
+  caption: [Начальное состояние для примера 2.4.],
 )
 
 
@@ -257,7 +258,7 @@ str(y) + text
 ```
 
 
-== Задание
+=== Пример 5
 
 
 Начальное состояние:
@@ -273,7 +274,7 @@ str(y) + text
           text: (type: "str", value: "5"),
     ),
   )),
-  caption: [Начальное состояние для задания 2.5.],
+  caption: [Начальное состояние для примера 2.5.],
 )
 
 
@@ -290,12 +291,12 @@ a + int(b)
 ```
 
 
-= Предсказывать изменение состояния после одной инструкции
+== Предсказывать изменение состояния после одной инструкции
 
 Дано начальное состояние на диаграмме и одна инструкция. Нарисуйте состояние после её выполнения.
 
 
-== Задание
+=== Пример 1
 
 
 Начальное состояние:
@@ -310,7 +311,7 @@ a + int(b)
           shared: (type: "int", value: 8),
     ),
   )),
-  caption: [Начальное состояние для задания 3.1.],
+  caption: [Начальное состояние для примера 3.1.],
 )
 
 
@@ -322,7 +323,7 @@ x = x + 5
 ```
 
 
-== Задание
+=== Пример 2
 
 
 Начальное состояние:
@@ -337,7 +338,7 @@ x = x + 5
           original: (type: "str", value: "red"),
     ),
   )),
-  caption: [Начальное состояние для задания 3.2.],
+  caption: [Начальное состояние для примера 3.2.],
 )
 
 
@@ -349,7 +350,7 @@ text = text + "!"
 ```
 
 
-== Задание
+=== Пример 3
 
 
 Начальное состояние:
@@ -366,7 +367,7 @@ text = text + "!"
           two: (type: "int", value: 2),
     ),
   )),
-  caption: [Начальное состояние для задания 3.3.],
+  caption: [Начальное состояние для примера 3.3.],
 )
 
 
@@ -378,7 +379,7 @@ alias.append(3)
 ```
 
 
-== Задание
+=== Пример 4
 
 
 Начальное состояние:
@@ -394,7 +395,7 @@ alias.append(3)
           one: (type: "int", value: 1),
     ),
   )),
-  caption: [Начальное состояние для задания 3.4.],
+  caption: [Начальное состояние для примера 3.4.],
 )
 
 
@@ -406,7 +407,7 @@ second = [1, 2]
 ```
 
 
-== Задание
+=== Пример 5
 
 
 Начальное состояние:
@@ -422,7 +423,7 @@ second = [1, 2]
           text_value: (type: "str", value: "3.5"),
     ),
   )),
-  caption: [Начальное состояние для задания 3.5.],
+  caption: [Начальное состояние для примера 3.5.],
 )
 
 
@@ -434,12 +435,12 @@ text = str(float(text) + score)
 ```
 
 
-= Предсказывать последовательность состояний программы
+== Предсказывать последовательность состояний программы
 
 В начале каждого задания пользовательских имён и объектов ещё нет. Нарисуйте состояние программы после каждой строки. Объясните, какие имена появляются или меняют связи и какие объекты изменяются.
 
 
-== Задание
+=== Пример 1
 
 
 ```python
@@ -450,7 +451,7 @@ c = b + 1
 ```
 
 
-== Задание
+=== Пример 2
 
 
 ```python
@@ -461,7 +462,7 @@ copy = copy + "?"
 ```
 
 
-== Задание
+=== Пример 3
 
 
 ```python
@@ -472,7 +473,7 @@ copy.append(3)
 ```
 
 
-== Задание
+=== Пример 4
 
 
 ```python
@@ -482,240 +483,8 @@ first.append(6)
 second = first
 ```
 
-#import "@preview/rubber-article:1.5.2": *
-#import "@preview/ctheorems:2.0.0": *
-#import "@preview/codly:2.0.0" as codly
-#import thm-themes.ams: *
-#import "@preview/latex-lookalike:0.1.4"
-#import "/typst/python-state.typ": python-state
 
-#show: article.with(
-  page-paper: "us-letter",
-  page-margins: 1.75in,
-  text-font: "New Computer Modern",
-  text-size: 11pt,
-  lang: "ru",
-  par-first-line-indent: 1.5em,
-  par-spacing: 0.55em,
-  par-justify: true,
-  heading-numbering: "1.1",
-  page-numbering: "1",
-  page-numbering-align: center,
-  eq-numbering: "(1)",
-  eq-chapterwise: false,
-  header-display: false,
-)
-#show: latex-lookalike.style-outline
-#show: thm-rules.with(qed-symbol: $square$)
-#show raw: set text(font: "New Computer Modern Mono")
-#show math.equation: set text(weight: "regular")
-
-#maketitle(
-  title: "Задания к модулю 1 (состояние программы)",
-  authors: ("Основы программирования на Python",),
-  date: "Октябрь 2026",
-)
-
-#outline(title: [Содержание])
-#pagebreak()
-
-// Монохромные листинги в духе LaTeX listings с двумя линиями.
-#show#import "@preview/rubber-article:1.5.2": *
-#import "@preview/ctheorems:2.0.0": *
-#import "@preview/codly:2.0.0" as codly
-#import thm-themes.ams: *
-#import "@preview/latex-lookalike:0.1.4"
-#import "/typst/python-state.typ": python-state
-
-#show: article.with(
-  page-paper: "us-letter",
-  page-margins: 1.75in,
-  text-font: "New Computer Modern",
-  text-size: 11pt,
-  lang: "ru",
-  par-first-line-indent: 1.5em,
-  par-spacing: 0.55em,
-  par-justify: true,
-  heading-numbering: "1.1",
-  page-numbering: "1",
-  page-numbering-align: center,
-  eq-numbering: "(1)",
-  eq-chapterwise: false,
-  header-display: false,
-)
-#show: latex-lookalike.style-outline
-#show: thm-rules.with(qed-symbol: $square$)
-#show raw: set text(font: "New Computer Modern Mono")
-#show math.equation: set text(weight: "regular")
-
-#maketitle(
-  title: "Задания к модулю 1 (состояние программы)",
-  authors: ("Основы программирования на Python",),
-  date: "Октябрь 2026",
-)
-
-#outline(title: [Содержание])
-#pagebreak()
-
-// Монохромные листинги в духе LaTeX listings с двумя линиями.
-#show: codly.theme(
-  "clean",
-  syntax: none,
-  foreground: black,
-  muted: luma(100),
-  line: (text: (font: "New Computer Modern Mono", size: 10pt, fill: black)),
-  number: (text: (font: "New Computer Modern", size: 7pt, fill: luma(90))),
-)
-#show: codly.set_(
-  lang-position: none,
-  file-position: none,
-  radius: 0pt,
-  padding: 0pt,
-  breakable: false,
-  width: 100%,
-  column-gutter: 8pt,
-)
-#show: codly.line-set_(fill: none, stroke: none, inset: (x: 0pt, y: 0.6pt))
-#show: codly.number-set_(numbering: "1", placement: "outside", align: right + horizon)
-#let number-offset = 11pt
-#show raw.where(block: true): it => block(
-  width: 100%, above: 12pt, below: 12pt, breakable: false,
-)[
-  #line(length: 100%, stroke: 0.7pt + black)
-  #v(6pt)
-  #move(dx: -number-offset)[#codly.new(it)]
-  #v(6pt)
-  #line(length: 100%, stroke: 0.7pt + black)
-]
-
-#heading(level: 1, numbering: none, outlined: false)[Что это такое]
-
-Подобные задания будут на зачёте. Списать на зачёте не получится. Он будет устным. Поэтому нужно научиться их решать самостоятельно.
-
-Задания разбиты по компетенциям (то есть по знаниям и навыкам, владение которыми вам нужно показать).
-
-
-= Находить выражения в тексте программы
-
-Для каждого задания найдите все выражения, в том числе вложенные. При наличии составного выражения покажите, из каких выражений оно состоит.
-
-
-== Задание
-
-
-```python
-count = 12
-label = "boxes"
-print(count, label)
-```
-
-
-== Задание
-
-
-```python
-result = float("2.5") + 1.5
-print(result)
-```
-
-
-== Задание
-
-
-```python
-def make_word(n):
-    return "id-" + str(n)
-
-text = make_word(7)
-print(text)
-```
-
-
-== Задание
-
-
-```python
-a = 2
-b = a: codly.theme(
-  "clean",
-  syntax: none,
-  foreground: black,
-  muted: luma(100),
-  line: (text: (font: "New Computer Modern Mono", size: 10pt, fill: black)),
-  number: (text: (font: "New Computer Modern", size: 7pt, fill: luma(90))),
-)
-#show: codly.set_(
-  lang-position: none,
-  file-position: none,
-  radius: 0pt,
-  padding: 0pt,
-  breakable: false,
-  width: 100%,
-  column-gutter: 8pt,
-)
-#show: codly.line-set_(fill: none, stroke: none, inset: (x: 0pt, y: 0.6pt))
-#show: codly.number-set_(numbering: "1", placement: "outside", align: right + horizon)
-#let number-offset = 11pt
-#show raw.where(block: true): it => block(
-  width: 100%, above: 12pt, below: 12pt, breakable: false,
-)[
-  #line(length: 100%, stroke: 0.7pt + black)
-  #v(6pt)
-  #move(dx: -number-offset)[#codly.new(it)]
-  #v(6pt)
-  #line(length: 100%, stroke: 0.7pt + black)
-]
-
-#heading(level: 1, numbering: none, outlined: false)[Что это такое]
-
-Подобные задания будут на зачёте. Списать на зачёте не получится. Он будет устным. Поэтому нужно научиться их решать самостоятельно.
-
-Задания разбиты по компетенциям (то есть по знаниям и навыкам, владение которыми вам нужно показать).
-
-
-= Находить выражения в тексте программы
-
-Для каждого задания найдите все выражения, в том числе вложенные. При наличии составного выражения покажите, из каких выражений оно состоит.
-
-
-== Задание
-
-
-```python
-count = 12
-label = "boxes"
-print(count, label)
-```
-
-
-== Задание
-
-
-```python
-result = float("2.5") + 1.5
-print(result)
-```
-
-
-== Задание
-
-
-```python
-def make_word(n):
-    return "id-" + str(n)
-
-text = make_word(7)
-print(text)
-```
-
-
-== Задание
-
-
-```python
-a = 2
-b = a
-== Задание
+=== Пример 5
 
 
 ```python
@@ -726,12 +495,12 @@ s = str(n)
 ```
 
 
-= Предсказывать вывод программы с def и return
+== Предсказывать вывод программы с `def` и `return`
 
 Определите точный вывод в консоль и пошагово объясните выполнение: вызовы функций, связывание аргументов с параметрами, выполнение return, дальнейшее использование возвращённых объектов.
 
 
-== Задание
+=== Пример 1
 
 
 ```python
@@ -743,7 +512,7 @@ print(double(1.5))
 ```
 
 
-== Задание
+=== Пример 2
 
 
 ```python
@@ -758,7 +527,7 @@ print(number)
 ```
 
 
-== Задание
+=== Пример 3
 
 
 ```python
@@ -772,7 +541,7 @@ print(add(twice(2), twice(3)))
 ```
 
 
-== Задание
+=== Пример 4
 
 
 ```python
@@ -788,7 +557,7 @@ print(result)
 ```
 
 
-== Печать внутри функции и return
+=== Пример 5. Печать внутри функции и `return`
 
 
 ```python
@@ -799,4 +568,5 @@ def decorate(s):
 
 print("Result:", decorate("cat"))
 ```
+
 
