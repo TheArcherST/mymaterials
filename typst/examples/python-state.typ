@@ -1,13 +1,12 @@
 #import "/typst/python-state.typ": python-state
-#set page(paper: "a4", margin: (x: 25mm, y: 25mm), numbering: "1")
-#set text(font: "Noto Serif", lang: "ru", size: 11pt)
-#set par(justify: true, leading: 0.65em)
-#set heading(numbering: "1.1")
-#show raw: set text(font: "JetBrains Mono", size: 9pt)
-#show figure.caption: set text(size: 10pt)
+#set page(paper: "a4", numbering: "1")
+#set text(font: "New Computer Modern", lang: "ru", size: 10pt)
+#set par(justify: true, first-line-indent: 1.5em)
+#set heading(numbering: "1")
+#set raw(theme: none)
+#show raw: set text(font: "DejaVu Sans Mono", size: 9pt)
 
-#align(center, text(size: 17pt)[Состояние программы в Python])
-#v(12pt)
+#align(center, text(size: 17pt, weight: "bold")[Состояние программы в Python])
 
 = Используемая предметная модель
 

@@ -65,6 +65,10 @@
                         </span>
                     {% endif %}
 
+                    {% if page.extra?.build?.pdf %}
+                        :: <a href="{{ get_url(path=page.extra.build.pdf) }}" download>Download PDF</a>
+                    {% endif %}
+
                     {% if page.draft %}
                         <span class="draft-label">DRAFT</span>
                     {% endif %}
@@ -77,12 +81,6 @@
                     <strong>tl;dr:</strong>
                     {{ page.extra.tldr }}
                 </div>
-            {% endif %}
-
-            {% if page.extra?.build?.pdf %}
-                <p class="document-download">
-                    <a href="{{ get_url(path=page.extra.build.pdf) }}" download>Скачать PDF</a>
-                </p>
             {% endif %}
 
             <section class="body">
