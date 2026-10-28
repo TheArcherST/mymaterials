@@ -1,19 +1,90 @@
 #import "/typst/python-state.typ": python-state
-#set page(paper: "a4", numbering: "1")
-#set text(font: "New Computer Modern", lang: "ru", size: 10pt)
-#set par(justify: true, first-line-indent: 1.5em)
-#set heading(numbering: "1")
-#set raw(theme: none)
-#show raw: set text(font: "DejaVu Sans Mono", size: 9pt)
 
-#align(center, text(size: 17pt, weight: "bold")[Задания к модулю 1 (состояние программы)])
-#align(center)[24 октября 2026 года]
+#import "@preview/rubber-article:0.5.2": *
+#import "@preview/ctheorems:2.0.0": *
+#import thm-themes.ams: *
 
-#text(size: 13pt, weight: "bold")[Что это такое]
+// Классический LaTeX article, 10pt
+#show: article.with(
+  page-paper: "us-letter",
+  page-margins: 1.75in,
+
+  text-font: "New Computer Modern",
+  text-size: 11pt,
+  lang: "ru",
+
+  par-first-line-indent: 1.5em,
+  par-spacing: 0.55em,
+  par-justify: true,
+
+  heading-numbering: "1.1",
+
+  page-numbering: "1",
+  page-numbering-align: center,
+
+  eq-numbering: "(1)",
+  eq-chapterwise: false,
+
+  header-display: false,
+)
+#import "@preview/latex-lookalike:0.1.4"
+
+#show: latex-lookalike.style-outline
+
+
+// Окружения теорем как в amsthm
+#show: thm-rules.with(
+  qed-symbol: $square$,
+)
+
+// Шрифт для кода
+#show raw: set text(
+  font: "New Computer Modern Mono",
+)
+
+// Шрифт в математике
+#show math.equation: set text(
+  weight: "regular",
+)
+
+// Титульный блок
+#maketitle(
+  title: "Материалы к первому модулю зачёта",
+  authors: ("Основы программирования на Python",),
+  date: "Ноябрь 2026",
+)
+
+#outline(title: [Содержание])
+#pagebreak()
+
+#show raw.where(block: true): it => {
+  // Настраиваем отображение строк с номерами
+  block(
+    // fill: rgb("#f5f5f5"),
+    inset: 10pt,
+    radius: 2pt,
+    stroke: .2pt + rgb("#343a4a"),
+    width: 100%,
+    [
+      #set text(size: 9pt, font: "DejaVu Sans Mono")
+      #grid(
+        columns: (auto, 1fr),
+        gutter: 10pt,
+        // Генерация номеров строк
+        align(right, text(fill: gray)[
+          #range(1, it.lines.len() + 1).map(str).join("\n")
+        ]),
+        // Сам код
+        it
+      )
+    ]
+  )
+}
+
 
 Подобные задания будут на зачёте. Списать на зачёте не получится. Он будет устным. Поэтому нужно научиться их решать самостоятельно.
 
-Задания разбиты по компетенциям (то есть по знаниям и навыкам, владение которыми вам нужно показать).
+Задания разбиты по компенсациям (то есть по знаниям и навыкам, владение которыми вам нужно показать).
 
 = Компетенция: Находить выражения в тексте программы
 
