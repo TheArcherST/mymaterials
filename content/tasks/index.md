@@ -5,7 +5,7 @@ description = ""
 insert_anchor_links = "heading"
 
 [extra.pdf]
-source = "document.typ"
+source = "print/document.typ"
 +++
 
 ## Что это такое
