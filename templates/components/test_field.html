@@ -1,11 +1,11 @@
-{% set test_answer_label = label | default(value="Ответ") %}
-{% set test_answer_name = name | default(value=test_answer_label | slugify) %}
+{% component test_field(label: string = "Ответ", name: string = "", id: string = "", placeholder: string = "", value: string = "", required: bool = false) %}
+{% set test_answer_name = name or label | slugify %}
 {% set test_answer_slug = test_answer_name | slugify %}
-{% set test_answer_id = id | default(value="test-answer-" ~ test_answer_slug) %}
-{% set test_answer_placeholder = placeholder | default(value="") %}
-{% set test_answer_value = value | default(value="") %}
-{% set test_answer_required = required | default(value=false) %}
-
+{% set test_answer_id = id or "test-answer-" ~ test_answer_slug %}
+{% set test_answer_label = label %}
+{% set test_answer_placeholder = placeholder %}
+{% set test_answer_value = value %}
+{% set test_answer_required = required %}
 <div class="test-attempt-field">
     <label class="test-attempt-field__label" for="{{ test_answer_id | escape }}">{{ test_answer_label | safe }}</label>
     <textarea
@@ -17,3 +17,4 @@
         placeholder="{{ test_answer_placeholder | escape }}"
         {% if test_answer_required %}required{% endif %}>{{ test_answer_value | escape }}</textarea>
 </div>
+{% endcomponent test_field %}

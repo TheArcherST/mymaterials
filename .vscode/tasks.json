@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Собрать сайт и PDF",
+      "type": "shell",
+      "command": "make build",
+      "group": {"kind": "build", "isDefault": true},
+      "problemMatcher": []
+    },
+    {
+      "label": "Предпросмотр в облачном редакторе",
+      "type": "shell",
+      "command": "make serve ARGS='--base-url https://editor.mymaterials.ru/proxy/8000/'",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Собрать пример PDF",
+      "type": "shell",
+      "command": "make pdf-example",
+      "problemMatcher": []
+    }
+  ]
+}

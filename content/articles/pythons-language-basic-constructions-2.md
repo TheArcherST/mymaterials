@@ -217,7 +217,7 @@ def print_two_lists(lst_1, lst_2):
 
 Пример входных данных (элементов в списках может быть сколько угодно)
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     name: Global frame
@@ -252,7 +252,7 @@ objects:
     value: Test 2
 
 
-{% end %}
+{% </python_state> %}
 
 Пример вывода в терминал
 

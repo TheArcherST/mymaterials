@@ -1,7 +1,8 @@
-{% set python_state_id = id | default(value="") %}
-{% set python_state_title = title | default(value="Python state") %}
-{% set python_state_body = body | default(value="") %}
-{% set python_state_ui_version = config.extra.ui_version_control.python_state | default(value="1") %}
+{% component python_state(id: string = "", title: string = "Python state", @config) %}
+{% set python_state_id = id %}
+{% set python_state_title = title %}
+{% set python_state_body = body %}
+{% set python_state_ui_version = config.extra.ui_version_control?.python_state | default(value="1") %}
 
 <style>
 .python-state-shortcode {
@@ -499,36 +500,36 @@
 </style>
 
 <div{% if python_state_id %} id="{{ python_state_id }}"{% endif %} class="python-state-shortcode" data-python-state-shortcode>
-    <div class="python-state-shortcode__header">
-        <div class="python-state-shortcode__header-left">
-            <button class="python-state-shortcode__button" type="button" data-python-state-reset-button>Reset</button>
-            <div class="python-state-shortcode__composition-actions">
-                <button class="python-state-shortcode__button" type="button" data-python-state-export-composition-button>Copy composition</button>
-                <button class="python-state-shortcode__button" type="button" data-python-state-import-composition-button>Paste composition</button>
-            </div>
-        </div>
-        <div class="python-state-shortcode__header-main">
-            <button class="python-state-shortcode__button" type="button" data-python-state-fullscreen-button aria-pressed="false">Full page</button>
-            <div class="python-state-shortcode__composition-status" data-python-state-composition-status hidden role="status">
-                <span class="python-state-shortcode__composition-status-text" data-python-state-composition-status-text></span>
-                <button class="python-state-shortcode__composition-status-close" type="button" data-python-state-composition-status-close aria-label="Dismiss composition message">&times;</button>
-            </div>
-        </div>
-    </div>
+<div class="python-state-shortcode__header">
+<div class="python-state-shortcode__header-left">
+<button class="python-state-shortcode__button" type="button" data-python-state-reset-button>Reset</button>
+<div class="python-state-shortcode__composition-actions">
+<button class="python-state-shortcode__button" type="button" data-python-state-export-composition-button>Copy composition</button>
+<button class="python-state-shortcode__button" type="button" data-python-state-import-composition-button>Paste composition</button>
+</div>
+</div>
+<div class="python-state-shortcode__header-main">
+<button class="python-state-shortcode__button" type="button" data-python-state-fullscreen-button aria-pressed="false">Full page</button>
+<div class="python-state-shortcode__composition-status" data-python-state-composition-status hidden role="status">
+<span class="python-state-shortcode__composition-status-text" data-python-state-composition-status-text></span>
+<button class="python-state-shortcode__composition-status-close" type="button" data-python-state-composition-status-close aria-label="Dismiss composition message">&times;</button>
+</div>
+</div>
+</div>
 
-    <div class="python-state-shortcode__viewport">
-        <div class="python-state-shortcode__stage" data-python-state-stage aria-label="{{ python_state_title | striptags }}">
-            <svg class="python-state-shortcode__arrows" data-python-state-arrows aria-hidden="true"></svg>
-            <div class="python-state-shortcode__canvas-bounds" data-python-state-canvas-bounds aria-hidden="true"></div>
-            <div class="python-state-shortcode__nodes" data-python-state-nodes></div>
-        </div>
-    </div>
+<div class="python-state-shortcode__viewport">
+<div class="python-state-shortcode__stage" data-python-state-stage aria-label="{{ python_state_title | striptags }}">
+<svg class="python-state-shortcode__arrows" data-python-state-arrows aria-hidden="true"></svg>
+<div class="python-state-shortcode__canvas-bounds" data-python-state-canvas-bounds aria-hidden="true"></div>
+<div class="python-state-shortcode__nodes" data-python-state-nodes></div>
+</div>
+</div>
 
-    <script type="text/plain" class="python-state-shortcode__data" data-python-state-data>
+<script type="text/plain" class="python-state-shortcode__data" data-python-state-data>
 {{ python_state_body | safe }}
-    </script>
+</script>
 
-    <script>
+<script>
     (function () {
         const currentScript = document.currentScript;
         const root = currentScript.closest("[data-python-state-shortcode]");
@@ -3304,5 +3305,6 @@
             render(parsed.state);
         }
     }());
-    </script>
+</script>
 </div>
+{% endcomponent python_state %}

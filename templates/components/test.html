@@ -1,5 +1,6 @@
-{% set test_tag = tag | default(value="") %}
-{% set test_backend_url = backend | default(value=config.extra.test_backend_url | default(value="")) %}
+{% component test(tag: string = "", backend: string = "", @config) %}
+{% set test_tag = tag %}
+{% set test_backend_url = backend or config.extra.test_backend_url | default(value="") %}
 
 {% if test_tag %}
 <style>
@@ -92,7 +93,7 @@
 
 <form class="test-attempt-form" data-test-attempt-form data-test-tag="{{ test_tag | escape }}" data-test-backend-url="{{ test_backend_url | escape }}">
 
-{{ body | safe }}
+{{ body | markdown | safe }}
 
 <div class="test-attempt-submit">
     <div class="test-attempt-submit__header">Отправить ответы</div>
@@ -213,3 +214,4 @@
     <p class="test-attempt-submit__status" data-state="error">Для shortcode test нужно указать tag.</p>
 </div>
 {% endif %}
+{% endcomponent test %}

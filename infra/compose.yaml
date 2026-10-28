@@ -1,0 +1,54 @@
+name: mymaterials-editor
+services:
+  editor:
+    image: mymaterials-editor:local
+    build:
+      context: ..
+      dockerfile: infra/editor.Dockerfile
+    restart: unless-stopped
+    init: false
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    volumes:
+      - editor-home:/home/editor
+    secrets:
+      - editor_password
+    # Local access remains available for verification before DNS is configured.
+    ports:
+      - "127.0.0.1:18080:8080"
+    networks:
+      - proxy
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "${TRAEFIK_NETWORK:-mylab_default}"
+      traefik.http.routers.mymaterials-editor.rule: "Host(`${EDITOR_DOMAIN:-editor.mymaterials.ru}`)"
+      traefik.http.routers.mymaterials-editor.entrypoints: websecure
+      traefik.http.routers.mymaterials-editor.tls: "true"
+      traefik.http.routers.mymaterials-editor.tls.certresolver: "${TRAEFIK_RESOLVER:-letsencrypt}"
+      traefik.http.routers.mymaterials-editor.service: mymaterials-editor
+      traefik.http.services.mymaterials-editor.loadbalancer.server.port: "8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  proxy:
+    external: true
+    name: "${TRAEFIK_NETWORK:-mylab_default}"
+volumes:
+  editor-home:
+secrets:
+  editor_password:
+    file: "${EDITOR_PASSWORD_FILE:-./secrets/editor-password}"

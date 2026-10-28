@@ -1,3 +1,4 @@
+{% component tbox(header: string, id: string = "") %}
 <style>
 .tbox-container {
     --tbox-border-color: #24292e;
@@ -19,7 +20,7 @@
 
 </style>
 
-{% set anchor = id | default(value=header | slugify) %}
+{% set anchor = id or header | slugify %}
 
 <div id="{{ anchor }}" class="tbox-container">
 <div class="tbox-header">
@@ -29,7 +30,8 @@
 </div>
 <div class="tbox-body">
 
-{{ body | safe }}
+{{ body | markdown | safe }}
 
 </div>
 </div>
+{% endcomponent tbox %}

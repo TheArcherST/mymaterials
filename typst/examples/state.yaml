@@ -1,0 +1,20 @@
+frames:
+  global:
+    name: Глобальная область
+    bindings:
+      - name: items
+        object: items
+      - name: alias
+        object: items
+objects:
+  items:
+    type: list
+    value:
+      - object: number
+      - object: greeting
+  number:
+    type: int
+    value: 42
+  greeting:
+    type: str
+    value: Привет

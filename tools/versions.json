@@ -1,0 +1,9 @@
+{
+  "zola": "0.23.6",
+  "zola_sha256": "8f5132b3522412d04e395e0b25f6d68613ad272a873e54a2b3ebf664873024a4",
+  "typst": "0.15.1",
+  "typst_sha256": "a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c",
+  "code_server": "4.143.1",
+  "code_server_sha256": "e4b771c98fafbe2af3990ecd71d93ba22515588db550007076768a014ae34c02",
+  "apollo": "31e30e27638aa68394d8625e5c49ad3b8310bf65"
+}

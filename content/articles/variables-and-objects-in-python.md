@@ -21,12 +21,12 @@ a = "Hello World"
 
 Представим, что перед нами лист бумаги, на котором написано всё то, что компьтер сохраняет в оперативную память.  Как уже было сказано, в оперативной памяти хранится то, с чем компьютер работает в данный момент.  Ну, кажется логичным, что там должна быть записана строка с текстом `Hello World`.  Это действительно так, компьютер загрузит в оперативную память эту строку.  Давайте отразим это на бумаге:
 
-{% python_state() %}
+{% <python_state> %}
 objects:
   a:
     type: str
     value: Hello World
-{% end %}
+{% </python_state> %}
 
 Эта аналогия с листом бумаги очень грубая, но её достаточно чтобы понимать, как работает программа на Python.
 
@@ -48,12 +48,12 @@ print(a)
 ```
 Данные в оперативной памяти, с которыми он может работать при её выполнении:
 
-{% python_state() %}
+{% <python_state> %}
 objects:
   a:
     type: str
     value: Hello World
-{% end %}
+{% </python_state> %}
 
 Как он должен понять, что такое `a`?  Он с такими вводными это никак не сможет понять.  В опретивной памяти должна быть ещё информация о том, что обозначает имя `a`.  На самом деле после выполнения инструкции
 
@@ -63,7 +63,7 @@ a = "Hello World"
 
 В опреативной памяти окажется следующее:
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -73,7 +73,7 @@ objects:
   a:
     type: str
     value: Hello World
-{% end %}
+{% </python_state> %}
 
 И исходя уже из этого, Python поймёт, что обозначает имя `a`. И соответсвенно напечатает объект, с которым это имя связано.
 
@@ -93,7 +93,7 @@ b = [1, "Hello world"]
 
 Дело в том, что при выполнении этой строки будет задействовано не одно место в памяти, а сразу три.  А если считать имя, то даже четыре.  В понимании Python тут есть три объекта:
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -111,7 +111,7 @@ objects:
     value:
       - object: a
       - object: b
-{% end %}
+{% </python_state> %}
 
 Один из этих объектов является нашим списком.  Список хранит информацию о том, где находятся другие два объекта.  Иначе говоря, список хранит ссылки на свои элементы, а не сами элементы.
 
@@ -121,7 +121,7 @@ objects:
 a = {"b": 1, "c": [2]}
 ```
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -156,7 +156,7 @@ objects:
     type: int
     value: 2
 composition: '{"composition":{"v":1,"h":"ps1-1we9utz5qut","u":"1","p":{"frame:global":[121,28],"object:a":[421,24],"object:key_b":[275,109],"object:one":[719,51],"object:key_c":[274,190],"object:items":[574,110],"object:two":[717,132]}}}'
-{% end %}
+{% </python_state> %}
 
 # Работа с данными объектов
 
@@ -166,7 +166,7 @@ composition: '{"composition":{"v":1,"h":"ps1-1we9utz5qut","u":"1","p":{"frame:gl
 lst = []
 ```
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -176,13 +176,13 @@ objects:
   lst:
     type: list
     value: []
-{% end %}
+{% </python_state> %}
 
 ```python
 lst.append(1)
 ```
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -196,7 +196,7 @@ objects:
   one:
     type: int
     value: 1
-{% end %}
+{% </python_state> %}
 
 Однако значение некоторых объектов никак нельзя изменить, и нужно запомнить, какие объекты являются *неизменяемыми*.  Начнём с того, что нельзя изменить объекты вот с этими типами: `int`, `float`, `str`, `bool`.
 
@@ -211,7 +211,7 @@ a = a + 1
 
 На первой строке мы получили объект типа `int` со значением `один` и теперь имя `a` обозначает ссылку на этот объект.
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -221,11 +221,11 @@ objects:
   a:
     type: int
     value: 1
-{% end %}
+{% </python_state> %}
 
 На второй строке, во-первых, в результате вычисления выражения `a + 1` мы получили новый объект, с типом `int` и значением `два`. Во-вторых, мы изменили ссылку имени `a`: теперь оно указывает не на объект `1`, а на объект `2`. При этом мы никак не изменяли сами объекты.
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -235,7 +235,7 @@ objects:
   a:
     type: int
     value: 2
-{% end %}
+{% </python_state> %}
 
 То же самое относится к любым операциям со строками: данные объекта типа `str` не могут быть изменены.
 
@@ -244,7 +244,7 @@ a = "Hello"
 b = a + " World!"  # объект по ссылке `a` остался неизменным
 ```
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -259,7 +259,7 @@ objects:
   b:
     type: str
     value: Hello World!
-{% end %}
+{% </python_state> %}
 
 Важно понимать, что управление переменными и объектами происходит очень небольшим количеством способов — небольшим количеством механизмов языка. Сейчас мы рассмотрели
 1. Получение объектов через *вычисление выражений* (примеры таких выражений: `1`, `a + 1`)
@@ -289,7 +289,7 @@ print(str_1, str_2, lst_1, lst_2)
 
 Логично будет предположить, что после выполнения этого кода, в оперативной памяти мы увидим следующее
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -315,7 +315,7 @@ objects:
     type: list
     value: []
 composition: '{"composition":{"v":1,"h":"ps1-1lfqhaey4co","u":"1","p":{"frame:global":[118,24],"object:str_1":[560,24],"object:str_2":[559,102],"object:lst_1":[408,191],"object:lst_2":[408,270]}}}'
-{% end %}
+{% </python_state> %}
 
 Но давайте подумаем, есть ли смысл в том, чтобы держать в памяти все 4 объекта?  Тут же есть два дубля: в памяти два раза лежит одно и то же.  Можно сохранить в памяти всего два объекта, и результат выполнения не поменяется.  Допустим, интерпретатор Python тоже так решил, и вот в этих строках
 
@@ -330,7 +330,7 @@ print(str_1, str_2, lst_1, lst_2)
 
 Не создавал объект, а возвращал уже имеющийся, точно такой же объект.  В таком случае, получится так
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -349,7 +349,7 @@ objects:
   lst_1:
     type: list
     value: []
-{% end %}
+{% </python_state> %}
 
 Но что, если мы захотим добавить в один из списков элемент?
 
@@ -366,7 +366,7 @@ print(str_1, str_2, lst_1, lst_2)
 
 В таком случае получилось следующее
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -387,7 +387,7 @@ objects:
     value:
       - object: str_1
 composition: '{"composition":{"v":1,"h":"ps1-qdbr0sdp76","u":"1","p":{"frame:global":[118,60],"object:str_1":[619,71.88],"object:lst_1":[438,144]}}}'
-{% end %}
+{% </python_state> %}
 
 И в выводе у нас будет
 
@@ -412,7 +412,7 @@ print(str_1, str_2, lst_1, lst_2)
 
 Может привести как к такому состоянию
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -439,11 +439,11 @@ objects:
     type: list
     value: []
 composition: '{"composition":{"v":1,"h":"ps1-29w18v1iih7","u":"1","p":{"frame:global":[118,102],"object:str_1":[623,24],"object:str_2":[623,103],"object:lst_1":[467,181],"object:lst_2":[467,282]}}}'
-{% end %}
+{% </python_state> %}
 
 Так и к такому
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -467,7 +467,7 @@ objects:
     type: list
     value: []
 composition: '{"composition":{"v":1,"h":"ps1-15eykcowgcj","u":"1","p":{"frame:global":[118,145.37],"object:str_1":[630,24],"object:lst_1":[467,145.37],"object:lst_2":[467,246.37]}}}'
-{% end %}
+{% </python_state> %}
 
 И, в целом, нам пока не так важно, какой из вариантов произойдёт.  Просто запомните, что для некоторых неизменяемых объектов реализация Python может переиспользовать уже существующий объект.
 
@@ -500,7 +500,7 @@ final_message = name + " is " + str(age)
 
 ### Пример
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -520,7 +520,7 @@ objects:
   two:
     type: int
     value: 2
-{% end %}
+{% </python_state> %}
 
 Тут мы видим, что есть два имени. Первое имя ссылается на объект типа `list`, в значении имеющий две ссылки: на объект с типом `int` и значением `1`, и на объект с типом `int` и значением `2`.
 Второе имя ссылается на тот же самый объект типа `list`.
@@ -585,7 +585,7 @@ alias.append(alias[0] + alias[0])
 
 ### Первое состояние
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -600,12 +600,12 @@ objects:
   number:
     type: float
     value: 22.3
-{% end %}
+{% </python_state> %}
 
 
 ### Второе состояние
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -620,11 +620,11 @@ objects:
   print_hello:
     type: function
     value: 'Печатает в консоль сообщение "Hello"'
-{% end %}
+{% </python_state> %}
 
 ### Третье состояние
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -651,11 +651,11 @@ objects:
     type: int
     value: 1
 composition: '{"composition":{"v":1,"h":"ps1-buzkxta63j","u":"1","p":{"frame:global":[118,46],"object:items":[447,46],"object:a":[637,204],"object:a_copy":[637,125],"object:one":[639,24]}}}'
-{% end %}
+{% </python_state> %}
 
 ### Четвёртое состояние
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -688,12 +688,12 @@ objects:
     value:
       - object: lst_2
 composition: '{"composition":{"v":1,"h":"ps1-1yk3jwui8i5","u":"1","p":{"frame:global":[116,25],"object:lst_2":[468,172],"object:lst_1":[310,24],"object:a":[652,40],"object:one":[653,144],"object:lst_3":[310,171]}}}'
-{% end %}
+{% </python_state> %}
 
 
 ### Пятое состояние
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -753,12 +753,12 @@ objects:
     type: str
     value: Test
 composition: '{"composition":{"v":1,"h":"ps1-1b6m1edqc69","u":"1","p":{"frame:global":[84,174],"object:data":[378,24],"object:users":[453,144],"object:user":[424,271.9],"object:user_copy":[427,414],"object:key_users":[354,145],"object:key_id":[211,401],"object:key_name":[210,485],"object:one":[664,298],"object:test":[662,381]}}}'
-{% end %}
+{% </python_state> %}
 
 
 ### Шестое состояние
 
-{% python_state() %}
+{% <python_state> %}
 frames:
   global:
     bindings:
@@ -817,4 +817,4 @@ objects:
     type: int
     value: 4
 composition: '{"composition":{"v":1,"h":"ps1-1e1xrpvc1mo","u":"1","p":{"frame:global":[79,24],"object:array":[387,24],"object:array_copy":[387,125],"object:array_deepcopy":[385,280],"object:array_row_1":[542,24],"object:array_row_2":[542,125],"object:array_deepcopy_row_1":[538,281],"object:array_deepcopy_row_2":[537,391],"object:one":[752,38],"object:two":[751,118],"object:three":[751,200],"object:four":[750,283]}}}'
-{% end %}
+{% </python_state> %}

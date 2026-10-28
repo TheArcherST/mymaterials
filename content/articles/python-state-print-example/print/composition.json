@@ -1,0 +1,25 @@
+{
+  "composition": {
+    "v": 1,
+    "p": {
+      "frame:global": [
+        24,
+        24
+      ],
+      "object:items": [
+        240,
+        24
+      ],
+      "object:number": [
+        456,
+        24
+      ],
+      "object:greeting": [
+        456,
+        152
+      ]
+    },
+    "h": "ps1-1n18oacejdm",
+    "u": "1"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "tinymist.rootPath": "${workspaceFolder}",
+  "files.watcherExclude": {
+    "**/.build/**": true,
+    "**/.tools/**": true,
+    "**/public/**": true
+  }
+}

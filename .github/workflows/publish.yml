@@ -1,0 +1,84 @@
+name: Build and publish materials
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Fetch locked theme
+        run: |
+          commit=$(python3 -c 'import json; print(json.load(open("tools/versions.json"))["apollo"])')
+          git -C themes/apollo fetch origin "$commit"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build tools and fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-core fonts-jetbrains-mono
+          make tools
+      - name: Test PDF integration and publication
+        run: make check
+      - name: Build printable example
+        run: make pdf-example
+      - name: Build release
+        run: make build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: .build/public/
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-state-example
+          path: .build/python-state.pdf
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    environment: production
+    concurrency:
+      group: mymaterials-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Refuse an outdated release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/master" --jq '.object.sha')
+          test "$latest" = "$GITHUB_SHA" || { echo 'A newer commit is already on master; skipping this outdated release.'; exit 1; }
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: .build/public
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          test -n "$DEPLOY_SSH_KEY" && test -n "$DEPLOY_KNOWN_HOSTS"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Publish complete release
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: mymaterials-deploy
+          DEPLOY_PORT: '22'
+        run: bash tools/deploy.sh .build/public

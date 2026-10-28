@@ -1,0 +1,7 @@
+*
+!tools/
+!tools/install.py
+!tools/versions.json
+!infra/
+!infra/editor.Dockerfile
+!infra/editor-entrypoint.sh

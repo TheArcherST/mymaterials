@@ -1,2 +1,6 @@
 public/
-
+.build/
+.tools/
+__pycache__/
+infra/.env
+infra/secrets/
