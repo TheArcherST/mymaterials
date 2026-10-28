@@ -3,6 +3,9 @@ title = "Задания к модулю 1 (состояние программы
 date = 2026-10-24
 description = ""
 insert_anchor_links = "heading"
+
+[extra.pdf]
+source = "document.typ"
 +++
 
 ## Что это такое
