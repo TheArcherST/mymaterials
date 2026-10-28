@@ -63,7 +63,7 @@
     // fill: rgb("#f5f5f5"),
     inset: 10pt,
     radius: 2pt,
-    stroke: .2pt + rgb("#343a4a"),
+    stroke: .1pt + rgb("#343a4a"),
     width: 100%,
     [
       #set text(size: 9pt, font: "DejaVu Sans Mono")
